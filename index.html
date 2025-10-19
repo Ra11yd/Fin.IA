@@ -21,7 +21,7 @@
         body {
             font-family: 'Inter', sans-serif;
             overscroll-behavior-y: contain;
-            overflow: hidden; /* Previne scroll no body */
+            /* overflow: hidden; <- Removido para melhorar compatibilidade mobile */
         }
         .chat-container::-webkit-scrollbar, .side-menu-content::-webkit-scrollbar { display: none; }
         .transaction-list::-webkit-scrollbar { width: 4px; }
@@ -58,7 +58,7 @@
                 <h1 class="text-xl font-bold">FIN.IA</h1>
             </div>
         </div>
-        <button id="install-button" class="hidden bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+        <button id="install-button" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors disabled:bg-indigo-400 disabled:cursor-not-allowed" disabled>
             Instalar
         </button>
     </header>
@@ -175,14 +175,16 @@ document.addEventListener('DOMContentLoaded', () => {
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             state.deferredInstallPrompt = e;
-            elements.installButton.classList.remove('hidden');
+            elements.installButton.disabled = false;
         });
 
         elements.installButton.addEventListener('click', async () => {
             if (state.deferredInstallPrompt) {
                 state.deferredInstallPrompt.prompt();
                 const { outcome } = await state.deferredInstallPrompt.userChoice;
-                if (outcome === 'accepted') { state.deferredInstallPrompt = null; elements.installButton.classList.add('hidden'); }
+                console.log(`User choice: ${outcome}`);
+                state.deferredInstallPrompt = null;
+                elements.installButton.classList.add('hidden');
             }
         });
     };
