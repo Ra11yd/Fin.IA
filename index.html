@@ -3,19 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fin.IA</title>
+    <title>FIN.IA - Seu Assistente Financeiro</title>
     
-    <!-- Metatags para PWA (Progressive Web App) -->
+    <!-- Metatags para PWA -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#1f2937">
-    <!-- Referência ao ícone da sua logo -->
-    <link rel="apple-touch-icon" href="logo fin.ia.web">
-    
-    <!-- Link para o Manifesto (gerado via JavaScript) -->
+    <meta name="theme-color" content="#111827">
+    <link rel="apple-touch-icon" href="logo.png">
     <link rel="manifest" id="manifest">
 
-    <!-- Dependências Externas (CDNs) -->
+    <!-- Dependências (CDNs) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -23,141 +20,112 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            /* Evita o "puxão para recarregar" em dispositivos móveis */
             overscroll-behavior-y: contain;
+            overflow: hidden; /* Previne scroll no body */
         }
-        /* Estilização da barra de rolagem */
-        .chat-container::-webkit-scrollbar,
-        .transaction-list::-webkit-scrollbar,
-        #side-menu::-webkit-scrollbar {
-            width: 4px;
-        }
-        .chat-container::-webkit-scrollbar-thumb,
-        .transaction-list::-webkit-scrollbar-thumb,
-        #side-menu::-webkit-scrollbar-thumb {
-            background-color: #4b5563;
-            border-radius: 20px;
-        }
-        /* Efeito de transição suave para o menu lateral */
-        #side-menu, #menu-overlay {
-            transition: all 0.3s ease-in-out;
-        }
-
-        /* --- NOVOS ESTILOS DO CHAT --- */
+        .chat-container::-webkit-scrollbar, .side-menu-content::-webkit-scrollbar { display: none; }
+        .transaction-list::-webkit-scrollbar { width: 4px; }
+        .transaction-list::-webkit-scrollbar-thumb { background-color: #4b5563; border-radius: 20px; }
+        #side-menu, #menu-overlay { transition: all 0.3s ease-in-out; }
+        
+        /* Estilos do Chat */
         #chat-container {
-             background-color: #e5ddd5; /* Cor de fundo similar ao WhatsApp */
+             background-color: #e5ddd5;
              background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23919191' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
         }
         .dark #chat-container {
-            background-color: #0d1418; /* Cor escura similar ao WhatsApp */
+            background-color: #0d1418;
             background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.07'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
         }
-        .chat-bubble {
-            padding: 10px 15px;
-            border-radius: 18px;
-            max-width: 75%;
-        }
-        .user-bubble {
-            background-color: #dcf8c6;
-            border-bottom-right-radius: 4px;
-        }
-        .dark .user-bubble {
-            background-color: #056162;
-        }
-        .ai-bubble {
-            background-color: #ffffff;
-            border-bottom-left-radius: 4px;
-        }
-        .dark .ai-bubble {
-            background-color: #2a2c33;
-        }
-        .chat-bubble img {
-            border-radius: 12px;
-        }
+        .chat-bubble { padding: 8px 12px; border-radius: 12px; max-width: 80%; word-wrap: break-word; }
+        .user-bubble { background-color: #dcf8c6; border-bottom-right-radius: 4px; }
+        .dark .user-bubble { background-color: #056162; }
+        .ai-bubble { background-color: #ffffff; border-bottom-left-radius: 4px; }
+        .dark .ai-bubble { background-color: #2a2c33; }
+        .chat-bubble img { border-radius: 8px; }
     </style>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex flex-col h-screen overflow-hidden">
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 h-screen flex flex-col">
 
-    <!-- Cabeçalho Principal -->
-    <header class="bg-white dark:bg-gray-800 shadow-md p-4 flex items-center justify-between z-20">
-        <div class="flex items-center space-x-4">
-             <button id="menu-button" class="p-2 text-gray-500 dark:text-gray-400 hover:text-indigo-500 transition-colors">
+    <!-- Cabeçalho -->
+    <header class="bg-white dark:bg-gray-800 shadow-md p-4 flex items-center justify-between z-30 flex-shrink-0">
+        <div class="flex items-center space-x-3">
+            <button id="menu-button" class="p-2 -ml-2 text-gray-600 dark:text-gray-300">
                 <i data-lucide="menu"></i>
             </button>
-            <div class="flex items-center space-x-2">
-                <img src="logo fin.ia.web" alt="Fin.IA Logo" class="w-7 h-7 rounded-lg">
-                <h1 class="text-xl font-bold">Fin.IA</h1>
+            <div class="flex items-center space-x-3">
+                <img src="logo.png" alt="FIN.IA Logo" class="w-8 h-8 rounded-lg">
+                <h1 class="text-xl font-bold">FIN.IA</h1>
             </div>
         </div>
         <button id="install-button" class="hidden bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
-            Instalar App
+            Instalar
         </button>
     </header>
 
-    <!-- Menu Lateral (Dashboard) -->
-    <aside id="side-menu" class="fixed top-0 left-0 w-80 md:w-96 h-full bg-white dark:bg-gray-800 shadow-lg p-6 flex flex-col z-40 transform -translate-x-full overflow-y-auto">
-        <div class="flex justify-between items-center mb-4">
+    <!-- Menu Lateral -->
+    <aside id="side-menu" class="fixed top-0 left-0 h-full w-80 md:w-96 bg-white dark:bg-gray-800 shadow-lg z-50 transform -translate-x-full">
+        <div class="p-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-700">
             <h2 class="text-2xl font-bold">Dashboard</h2>
-             <button id="close-menu-button" class="p-2 text-gray-500 dark:text-gray-400 hover:text-red-500 transition-colors">
+            <button id="close-menu-button" class="p-2 text-gray-600 dark:text-gray-300">
                 <i data-lucide="x"></i>
             </button>
         </div>
-        
-        <div class="mb-4">
-            <label for="month-filter" class="block text-sm font-medium text-gray-500 dark:text-gray-400">Filtrar por Mês</label>
-            <select id="month-filter" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                <!-- Opções de mês serão inseridas via JS -->
-            </select>
-        </div>
-
-        <div class="grid grid-cols-1 gap-4 mb-4">
-            <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
-                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Gasto (Mês)</h3>
-                <p id="total-spent" class="text-2xl font-semibold">R$ 0,00</p>
+        <div class="side-menu-content p-6 space-y-6 overflow-y-auto" style="height: calc(100% - 73px);">
+            <!-- Visão Geral -->
+            <div>
+                <h3 class="text-xl font-bold mb-4">Visão Geral</h3>
+                <select id="month-filter" class="w-full bg-gray-100 dark:bg-gray-700 rounded-lg p-2 outline-none mb-4">
+                    <!-- Opções de mês -->
+                </select>
+                <div class="grid grid-cols-2 gap-4 text-center">
+                    <div>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Total Gasto</p>
+                        <p id="total-spent" class="text-2xl font-bold">R$ 0,00</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Principal Categoria</p>
+                        <p id="main-category" class="text-2xl font-bold">-</p>
+                    </div>
+                </div>
+                <div class="mt-6 h-48">
+                    <canvas id="categoryChart"></canvas>
+                </div>
             </div>
-            <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
-                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Categoria Principal</h3>
-                <p id="main-category" class="text-2xl font-semibold">-</p>
-            </div>
-        </div>
-        <div class="flex-1 min-h-[250px] mb-4">
-            <canvas id="categoryChart"></canvas>
-        </div>
-        <div>
-            <h3 class="font-bold mb-2">Lançamentos do Mês</h3>
-            <div id="transaction-list" class="transaction-list space-y-2 overflow-y-auto max-h-48 pr-2">
-                <!-- Transações serão inseridas via JS -->
+            <!-- Histórico -->
+            <div class="flex-1 flex flex-col">
+                 <h3 class="text-xl font-bold mb-4">Histórico de Lançamentos</h3>
+                <div id="transaction-list" class="transaction-list space-y-3 overflow-y-auto flex-1 pr-2">
+                    <!-- Transações -->
+                </div>
             </div>
         </div>
     </aside>
-    <!-- Overlay para o menu -->
-    <div id="menu-overlay" class="fixed top-0 left-0 w-full h-full bg-black/50 z-30 hidden"></div>
+    <div id="menu-overlay" class="fixed inset-0 bg-black/50 z-40 hidden"></div>
 
-    <!-- Conteúdo Principal (Chat) -->
-    <main class="flex-1 overflow-hidden flex flex-col">
-        <div class="bg-white dark:bg-gray-800 flex flex-col h-full w-full">
-            <div id="chat-container" class="chat-container flex-1 p-4 md:p-6 overflow-y-auto">
-                <!-- Mensagens do chat serão inseridas via JS -->
+    <!-- Conteúdo Principal: Chat -->
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <div id="chat-container" class="chat-container flex-1 p-4 overflow-y-auto">
+            <!-- Mensagens do Chat -->
+        </div>
+        <div id="loading-indicator" class="hidden p-4">
+             <div class="flex items-center justify-center space-x-2 text-gray-600 dark:text-gray-300">
+                <div class="w-2 h-2 rounded-full animate-pulse bg-indigo-400"></div>
+                <div class="w-2 h-2 rounded-full animate-pulse bg-indigo-400" style="animation-delay: 0.2s;"></div>
+                <div class="w-2 h-2 rounded-full animate-pulse bg-indigo-400" style="animation-delay: 0.4s;"></div>
+                <span class="text-sm">Analisando...</span>
             </div>
-            <div id="loading-indicator" class="hidden p-6 text-center">
-                <div class="flex items-center justify-center space-x-2 text-gray-600 dark:text-gray-300">
-                    <div class="w-4 h-4 rounded-full animate-pulse bg-indigo-400"></div>
-                    <div class="w-4 h-4 rounded-full animate-pulse bg-indigo-400" style="animation-delay: 0.2s;"></div>
-                    <div class="w-4 h-4 rounded-full animate-pulse bg-indigo-400" style="animation-delay: 0.4s;"></div>
-                    <span class="ml-2">Pensando...</span>
-                </div>
-            </div>
-            <div class="p-2 md:p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
-                <div class="flex items-center space-x-2 bg-white dark:bg-gray-700 rounded-full p-2 max-w-4xl mx-auto">
-                    <input type="file" id="image-input" accept="image/*" class="hidden">
-                    <button id="attach-button" class="p-2 text-gray-500 dark:text-gray-400 hover:text-indigo-500 transition-colors">
-                        <i data-lucide="paperclip"></i>
-                    </button>
-                    <input type="text" id="chat-input" placeholder="Digite um gasto ou faça uma pergunta..." class="flex-1 bg-transparent focus:outline-none">
-                     <button id="send-button" class="bg-indigo-600 text-white rounded-full p-2 hover:bg-indigo-700 transition-colors flex-shrink-0">
-                        <i data-lucide="send"></i>
-                    </button>
-                </div>
+        </div>
+        <div class="p-2 md:p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
+             <div class="flex items-center space-x-2 bg-white dark:bg-gray-700 rounded-full p-2 max-w-4xl mx-auto">
+                <input type="file" id="receipt-input" accept="image/*" class="hidden">
+                <button id="attach-button" class="p-2 text-gray-500 dark:text-gray-400 hover:text-indigo-500 transition-colors">
+                    <i data-lucide="paperclip"></i>
+                </button>
+                <input type="text" id="chat-input" placeholder="Envie uma nota ou digite um gasto..." class="flex-1 bg-transparent focus:outline-none">
+                <button id="send-button" class="bg-indigo-600 text-white rounded-full p-2 hover:bg-indigo-700 transition-colors flex-shrink-0">
+                    <i data-lucide="send"></i>
+                </button>
             </div>
         </div>
     </main>
@@ -167,289 +135,229 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- SELEÇÃO DOS ELEMENTOS DO DOM ---
     const elements = {
-        chatContainer: document.getElementById('chat-container'),
-        imageInput: document.getElementById('image-input'),
-        attachButton: document.getElementById('attach-button'),
-        sendButton: document.getElementById('send-button'),
-        chatInput: document.getElementById('chat-input'),
-        loadingIndicator: document.getElementById('loading-indicator'),
-        transactionList: document.getElementById('transaction-list'),
-        totalSpentEl: document.getElementById('total-spent'),
-        mainCategoryEl: document.getElementById('main-category'),
         installButton: document.getElementById('install-button'),
         manifestLink: document.getElementById('manifest'),
         menuButton: document.getElementById('menu-button'),
         closeMenuButton: document.getElementById('close-menu-button'),
         sideMenu: document.getElementById('side-menu'),
         menuOverlay: document.getElementById('menu-overlay'),
+        receiptInput: document.getElementById('receipt-input'),
+        attachButton: document.getElementById('attach-button'),
+        chatInput: document.getElementById('chat-input'),
+        sendButton: document.getElementById('send-button'),
+        chatContainer: document.getElementById('chat-container'),
+        loadingIndicator: document.getElementById('loading-indicator'),
         monthFilter: document.getElementById('month-filter'),
+        totalSpent: document.getElementById('total-spent'),
+        mainCategory: document.getElementById('main-category'),
         categoryChart: document.getElementById('categoryChart'),
+        transactionList: document.getElementById('transaction-list'),
     };
 
     // --- ESTADO DA APLICAÇÃO ---
-    let state = {
-        transactions: [],
-        chartInstance: null,
-        deferredInstallPrompt: null,
-    };
+    let state = { transactions: [], chartInstance: null, deferredInstallPrompt: null };
 
-    // --- LÓGICA DO MENU LATERAL ---
-    const toggleMenu = (open) => {
-        elements.sideMenu.classList.toggle('-translate-x-full', !open);
-        elements.menuOverlay.classList.toggle('hidden', !open);
-    };
-
-    // --- LÓGICA DE INSTALAÇÃO PWA (REESCRITA PARA O MODELO ORIGINAL) ---
+    // --- LÓGICA DE INSTALAÇÃO PWA ---
     const setupPWA = () => {
-        // 1. Gera o manifest.json dinamicamente
         const manifest = {
-            "name": "Fin.IA", "short_name": "Fin.IA", "start_url": ".", "display": "standalone", "background_color": "#111827", "theme_color": "#4f46e5", "description": "Controle seus gastos com a ajuda da IA.",
-            "icons": [ {"src": "logo.png", "sizes": "192x192", "type": "image/png"}, {"src": "logo.png", "sizes": "512x512", "type": "image/png"} ]
+            "name": "FIN.IA", "short_name": "FIN.IA", "start_url": ".", "display": "standalone", "background_color": "#111827", "theme_color": "#4f46e5", "description": "Seu assistente financeiro com IA.",
+            "icons": [{"src": "logo.png", "sizes": "192x192", "type": "image/png"}, {"src": "logo.png", "sizes": "512x512", "type": "image/png"}]
         };
-        const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
-        elements.manifestLink.href = URL.createObjectURL(manifestBlob);
+        elements.manifestLink.href = URL.createObjectURL(new Blob([JSON.stringify(manifest)], {type: 'application/json'}));
         
-        // 2. Registra o Service Worker para cache
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register(URL.createObjectURL(new Blob([`
-                const CACHE_NAME = 'fin-ia-cache-v1';
-                self.addEventListener('install', e => e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(['/', 'logo.png']))));
+                self.addEventListener('install', e => e.waitUntil(caches.open('fin-ia-cache-v1').then(c => c.addAll(['/','logo.png']))));
                 self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
-            `], { type: 'application/javascript' })))
-            .catch(err => console.error('Falha ao registrar Service Worker:', err));
+            `], {type: 'application/javascript'}))).catch(err => console.error('SW Error:', err));
         }
 
-        // 3. Ouve o evento que o navegador dispara quando o app pode ser instalado
         window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault(); 
+            e.preventDefault();
             state.deferredInstallPrompt = e;
-            elements.installButton.classList.remove('hidden'); // Mostra o botão
-            console.log('App pronto para ser instalado.');
+            elements.installButton.classList.remove('hidden');
         });
 
-        // 4. Lógica do botão de instalação
         elements.installButton.addEventListener('click', async () => {
             if (state.deferredInstallPrompt) {
                 state.deferredInstallPrompt.prompt();
                 const { outcome } = await state.deferredInstallPrompt.userChoice;
-                console.log(`Escolha do usuário: ${outcome}`);
-                state.deferredInstallPrompt = null;
-                elements.installButton.classList.add('hidden'); // Esconde o botão após a escolha
+                if (outcome === 'accepted') { state.deferredInstallPrompt = null; elements.installButton.classList.add('hidden'); }
             }
         });
     };
     
-    // --- FUNÇÕES DO CHAT (COM NOVO LAYOUT) ---
-    const addMessage = (content, sender = 'ai') => {
-        const messageWrapper = document.createElement('div');
-        messageWrapper.className = `w-full flex mb-3 ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
-        
-        const messageContent = document.createElement('div');
-        messageContent.className = `chat-bubble text-gray-800 dark:text-gray-100 break-words ${sender === 'user' ? 'user-bubble' : 'ai-bubble'}`;
-        
-        if (typeof content === 'object' && content.nodeType === 1) {
-            messageContent.appendChild(content);
-        } else {
-            messageContent.innerHTML = content.replace(/\n/g, '<br>');
-        }
-        
-        messageWrapper.appendChild(messageContent);
-        elements.chatContainer.appendChild(messageWrapper);
-        elements.chatContainer.scrollTop = elements.chatContainer.scrollHeight;
+    // --- LÓGICA DO MENU ---
+    const toggleMenu = (show) => {
+        elements.sideMenu.classList.toggle('-translate-x-full', !show);
+        elements.menuOverlay.classList.toggle('hidden', !show);
     };
 
-    // --- FUNÇÕES DO DASHBOARD ---
+    // --- LÓGICA DO CHAT ---
+    const addMessage = (content, sender = 'ai') => {
+        const wrapper = document.createElement('div');
+        wrapper.className = `w-full flex mb-3 ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
+        const bubble = document.createElement('div');
+        bubble.className = `chat-bubble text-gray-800 dark:text-gray-100 ${sender === 'user' ? 'user-bubble' : 'ai-bubble'}`;
+        if (typeof content === 'object' && content.nodeType === 1) bubble.appendChild(content);
+        else bubble.innerHTML = content.replace(/\n/g, '<br>');
+        wrapper.appendChild(bubble);
+        elements.chatContainer.appendChild(wrapper);
+        elements.chatContainer.scrollTop = elements.chatContainer.scrollHeight;
+    };
+    
+    const toggleLoading = (isLoading) => {
+        elements.loadingIndicator.classList.toggle('hidden', !isLoading);
+        elements.chatInput.disabled = isLoading;
+        elements.sendButton.disabled = isLoading;
+        elements.attachButton.disabled = isLoading;
+    };
+
+    // --- LÓGICA DE DADOS E DASHBOARD ---
+    const saveData = () => localStorage.setItem('finia-transactions', JSON.stringify(state.transactions));
+    
+    const loadData = () => {
+        const savedData = localStorage.getItem('finia-transactions');
+        state.transactions = savedData ? JSON.parse(savedData) : [];
+        populateMonthFilter();
+        renderDashboard();
+    };
+
+    const addTransaction = (data) => {
+        if (!data.merchant || typeof data.amount !== 'number' || !data.category) return null;
+        const newTransaction = { id: Date.now(), merchant: data.merchant, amount: data.amount, category: data.category, date: data.date || new Date().toISOString().split('T')[0] };
+        state.transactions.push(newTransaction);
+        saveData();
+        populateMonthFilter();
+        renderDashboard();
+        return newTransaction;
+    };
+
     const populateMonthFilter = () => {
         const uniqueMonths = [...new Set(state.transactions.map(t => t.date.substring(0, 7)))].sort().reverse();
-        const currentFilterValue = elements.monthFilter.value;
+        const currentFilter = elements.monthFilter.value;
         elements.monthFilter.innerHTML = '<option value="all">Todos os Meses</option>';
-        
         uniqueMonths.forEach(month => {
-            const [year, monthNum] = month.split('-');
-            const date = new Date(year, monthNum - 1, 1);
-            const monthName = date.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
-            const option = document.createElement('option');
-            option.value = month;
-            option.textContent = `${monthName.charAt(0).toUpperCase()}${monthName.slice(1)}`;
-            elements.monthFilter.appendChild(option);
+            const [year, m] = month.split('-');
+            const monthName = new Date(year, m - 1).toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+            elements.monthFilter.innerHTML += `<option value="${month}">${monthName.charAt(0).toUpperCase() + monthName.slice(1)}</option>`;
         });
-        
-        elements.monthFilter.value = uniqueMonths.includes(currentFilterValue) ? currentFilterValue : (uniqueMonths[0] || 'all');
+        elements.monthFilter.value = uniqueMonths.includes(currentFilter) ? currentFilter : (uniqueMonths[0] || 'all');
     };
 
     const renderDashboard = () => {
         const selectedMonth = elements.monthFilter.value;
-        const filteredTransactions = selectedMonth === 'all'
-            ? state.transactions
-            : state.transactions.filter(t => t.date.startsWith(selectedMonth));
+        const filtered = selectedMonth === 'all' ? state.transactions : state.transactions.filter(t => t.date.startsWith(selectedMonth));
 
-        const total = filteredTransactions.reduce((sum, t) => sum + t.amount, 0);
-        elements.totalSpentEl.textContent = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        elements.totalSpent.textContent = filtered.reduce((sum, t) => sum + t.amount, 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-        elements.transactionList.innerHTML = '';
-        if (filteredTransactions.length === 0) {
-            elements.transactionList.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400">Nenhum lançamento neste mês.</p>';
-        } else {
-            filteredTransactions.slice().reverse().forEach(t => {
-                const item = document.createElement('div');
-                item.className = 'flex justify-between items-center bg-gray-100 dark:bg-gray-700/50 p-2 rounded-md';
-                const formattedDate = new Date(t.date).toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'});
-                item.innerHTML = `<div><p class="font-semibold">${t.merchant}</p><p class="text-xs text-gray-500 dark:text-gray-400">${t.category} - ${formattedDate}</p></div><p class="font-bold text-indigo-500 dark:text-indigo-400">${t.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>`;
-                elements.transactionList.appendChild(item);
-            });
-        }
+        elements.transactionList.innerHTML = filtered.length === 0 ? '<p class="text-center text-gray-500 text-sm">Nenhum lançamento.</p>' : '';
+        filtered.slice().reverse().forEach(t => {
+            const item = document.createElement('div');
+            item.className = 'flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg';
+            const formattedDate = new Date(t.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'});
+            item.innerHTML = `<div><p class="font-bold">${t.merchant}</p><p class="text-xs text-gray-500 dark:text-gray-400">${t.category} - ${formattedDate}</p></div><p class="font-bold text-red-500">${t.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>`;
+            elements.transactionList.appendChild(item);
+        });
 
-        const categoryData = filteredTransactions.reduce((acc, t) => {
-            acc[t.category] = (acc[t.category] || 0) + t.amount;
-            return acc;
-        }, {});
+        const categoryData = filtered.reduce((acc, t) => { acc[t.category] = (acc[t.category] || 0) + t.amount; return acc; }, {});
+        elements.mainCategory.textContent = Object.keys(categoryData).reduce((a, b) => categoryData[a] > categoryData[b] ? a : b, '-');
 
-        const mainCategory = Object.keys(categoryData).reduce((a, b) => categoryData[a] > categoryData[b] ? a : b, '-');
-        elements.mainCategoryEl.textContent = mainCategory;
-
-        const chartLabels = Object.keys(categoryData);
-        const chartValues = Object.values(categoryData);
-
-        if (state.chartInstance) {
-            state.chartInstance.data.labels = chartLabels;
-            state.chartInstance.data.datasets[0].data = chartValues;
-            state.chartInstance.update();
-        } else {
-            const ctx = elements.categoryChart.getContext('2d');
-            state.chartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: chartLabels, datasets: [{ label: 'Gastos', data: chartValues, backgroundColor: ['rgba(79, 70, 229, 0.7)', 'rgba(239, 68, 68, 0.7)', 'rgba(245, 158, 11, 0.7)', 'rgba(16, 185, 129, 0.7)', 'rgba(59, 130, 246, 0.7)', 'rgba(139, 92, 246, 0.7)'], borderColor: 'rgba(31, 41, 55, 0.5)', borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: document.documentElement.classList.contains('dark') ? '#f3f4f6' : '#374151' } } } } });
-        }
+        if (state.chartInstance) state.chartInstance.destroy();
+        const ctx = elements.categoryChart.getContext('2d');
+        state.chartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: Object.keys(categoryData), datasets: [{ data: Object.values(categoryData), backgroundColor: ['#4f46e5', '#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
     };
 
-    // --- LÓGICA DE DADOS (PERSISTÊNCIA E MANIPULAÇÃO) ---
-    const saveData = () => localStorage.setItem('financialTransactions', JSON.stringify(state.transactions));
-    
-    const loadData = () => {
-        const savedData = localStorage.getItem('financialTransactions');
-        if (savedData) state.transactions = JSON.parse(savedData);
-        populateMonthFilter();
-        renderDashboard();
-    };
-    
-    const addTransaction = (data) => {
-        if (data.merchant && typeof data.amount === 'number' && data.category) {
-            const newTransaction = { id: Date.now(), merchant: data.merchant, amount: data.amount, category: data.category, date: data.date || new Date().toISOString().split('T')[0] };
-            state.transactions.push(newTransaction);
-            saveData();
-            populateMonthFilter();
-            renderDashboard();
-            return `✅ Gasto registrado!\nLocal: ${newTransaction.merchant}\nValor: ${newTransaction.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}\nData: ${new Date(newTransaction.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}`;
-        }
-        return null;
-    };
-
-    // --- LÓGICA DA API DO GEMINI ---
+    // --- LÓGICA DA IA (GEMINI) ---
     const callGeminiAPI = async (payload) => {
         const apiKey = "AIzaSyBjidop8ZSlwmUmP6Cm-1DYtAw1xDE8-vM";
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-        
         try {
             const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            if (!response.ok) throw new Error(`Erro na API: ${response.statusText}`);
+            if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
             const result = await response.json();
             return result.candidates[0].content.parts[0].text;
         } catch (error) {
-            console.error("Erro ao chamar a API Gemini:", error);
-            addMessage("😥 Desculpe, tive um problema de comunicação com a IA. Por favor, tente novamente.");
+            console.error("Gemini API Error:", error);
+            addMessage("😥 Desculpe, tive um problema de comunicação com a IA. Tente novamente.");
             return null;
         } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleImageUpload = async (base64Image) => {
-        setLoading(true, 'Analisando sua nota...');
-        const systemPrompt = `Analise a nota fiscal. Extraia "merchant" (nome do estabelecimento), "amount" (valor TOTAL numérico), "category" (uma de: Alimentação, Transporte, Moradia, Lazer, Saúde, Vestuário, Educação, Outros) e "date" (no formato AAAA-MM-DD). Se a data não for encontrada, use null. Responda APENAS com um objeto JSON válido.`;
-        const payload = { contents: [{ parts: [{ text: systemPrompt }, { inlineData: { mimeType: "image/jpeg", data: base64Image } }] }] };
-        const textResponse = await callGeminiAPI(payload);
-        
-        if (textResponse) {
-            try {
-                const data = JSON.parse(textResponse.replace(/```json|```/g, '').trim());
-                const confirmationMessage = addTransaction(data);
-                if (confirmationMessage) addMessage(confirmationMessage); else throw new Error('Dados da IA inválidos.');
-            } catch (e) {
-                addMessage("😥 Não consegui extrair os dados da imagem. Tente uma foto mais nítida.");
-            }
-        }
-    };
-
-    const handleTextMessage = async (userMessage) => {
-        setLoading(true, 'Pensando...');
-        const systemPrompt = `Você é um assistente financeiro. A data de hoje é ${new Date().toLocaleDateString('pt-BR')}. As transações recentes são: ${JSON.stringify(state.transactions.slice(-5))}.
-Se o usuário pedir para adicionar um gasto (ex: "adicione 50 reais no ifood ontem"), responda APENAS com JSON: {"action": "add", "data": {"merchant": "Nome", "amount": 50.00, "category": "Categoria", "date": "AAAA-MM-DD"}}. Inferir a data é crucial.
-Categorias: Alimentação, Transporte, Moradia, Lazer, Saúde, Vestuário, Educação, Outros.
-Se for uma pergunta (ex: "quanto gastei com lazer este mês?"), responda de forma conversacional.
-Usuário: "${userMessage}"`;
-        const payload = { contents: [{ parts: [{ text: systemPrompt }] }] };
-        const textResponse = await callGeminiAPI(payload);
-        
-        if (textResponse) {
-            try {
-                const data = JSON.parse(textResponse.replace(/```json|```/g, '').trim());
-                if (data.action === 'add' && data.data) {
-                    const confirmationMessage = addTransaction(data.data);
-                    if (confirmationMessage) addMessage(confirmationMessage);
-                } else {
-                    addMessage(textResponse);
-                }
-            } catch (e) {
-                addMessage(textResponse);
-            }
+            toggleLoading(false);
         }
     };
     
-    // --- FUNÇÕES DE CONTROLE DE UI ---
-    const setLoading = (isLoading, message = 'Pensando...') => {
-        elements.loadingIndicator.style.display = isLoading ? 'flex' : 'none';
-        elements.loadingIndicator.querySelector('span').textContent = message;
-        elements.attachButton.disabled = isLoading;
-        elements.sendButton.disabled = isLoading;
-        elements.chatInput.disabled = isLoading;
+    const processIAInstruction = (textResponse) => {
+         try {
+            const data = JSON.parse(textResponse.replace(/```json|```/g, '').trim());
+            if(data.action === 'add' && data.data) {
+                const added = addTransaction(data.data);
+                if (added) addMessage(`✅ Gasto de ${added.amount.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})} em "${added.merchant}" registrado na categoria ${added.category}!`);
+                else addMessage('Não consegui extrair informações válidas para registrar o gasto.');
+            } else if (data.action === 'talk') {
+                addMessage(data.response);
+            } else {
+                 addMessage("Não entendi a resposta da IA. Tente novamente.");
+            }
+        } catch (e) {
+            addMessage(textResponse);
+        }
     };
 
-    // --- REGISTRO DOS EVENT LISTENERS ---
+    const handleTextMessage = async (message) => {
+        addMessage(message, 'user');
+        toggleLoading(true);
+        const systemPrompt = `Você é um assistente financeiro. Hoje é ${new Date().toLocaleDateString('pt-BR')}.
+        - Se o usuário pedir para adicionar um gasto (ex: "adicione 50 reais no ifood ontem"), responda APENAS com JSON: {"action": "add", "data": {"merchant": "Nome", "amount": 50.00, "category": "Categoria", "date": "AAAA-MM-DD"}}. Inferir a data é crucial. Categorias válidas: Alimentação, Transporte, Moradia, Lazer, Saúde, Vestuário, Educação, Outros.
+        - Se for uma pergunta (ex: "quanto gastei com lazer?"), responda com JSON: {"action": "talk", "response": "Sua resposta aqui"}. Para responder, use estes dados de transações: ${JSON.stringify(state.transactions)}.
+        Usuário disse: "${message}"`;
+        const payload = { contents: [{ parts: [{ text: systemPrompt }] }] };
+        const responseText = await callGeminiAPI(payload);
+        if(responseText) processIAInstruction(responseText);
+    };
+
+    const handleImageUpload = async (imageFile) => {
+        const imgElement = document.createElement('img');
+        imgElement.src = URL.createObjectURL(imageFile);
+        imgElement.className = "max-w-xs h-auto rounded-lg";
+        addMessage(imgElement, 'user');
+        toggleLoading(true);
+        const base64Image = await new Promise(resolve => {
+            const reader = new FileReader();
+            reader.onload = e => resolve(e.target.result.split(',')[1]);
+            reader.readAsDataURL(imageFile);
+        });
+        const systemPrompt = `Analise a nota fiscal. Extraia "merchant", "amount" (numérico), "category" (uma de: Alimentação, Transporte, Moradia, Lazer, Saúde, Vestuário, Educação, Outros) e "date" (AAAA-MM-DD). Responda APENAS com JSON: {"action": "add", "data": {...}}`;
+        const payload = { contents: [{ parts: [{ text: systemPrompt }, { inlineData: { mimeType: imageFile.type, data: base64Image } }] }] };
+        const responseText = await callGeminiAPI(payload);
+        if(responseText) processIAInstruction(responseText);
+    };
+    
+    // --- EVENT LISTENERS ---
     const setupEventListeners = () => {
         elements.menuButton.addEventListener('click', () => toggleMenu(true));
         elements.closeMenuButton.addEventListener('click', () => toggleMenu(false));
         elements.menuOverlay.addEventListener('click', () => toggleMenu(false));
-        elements.attachButton.addEventListener('click', () => elements.imageInput.click());
-        elements.imageInput.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const img = document.createElement('img');
-                    img.src = e.target.result;
-                    img.className = "max-w-full h-auto";
-                    addMessage(img, 'user');
-                    const base64Data = e.target.result.split(',')[1];
-                    handleImageUpload(base64Data);
-                };
-                reader.readAsDataURL(file);
-                elements.imageInput.value = '';
-            }
-        });
-        const sendTextMessage = () => {
-            const message = elements.chatInput.value.trim();
-            if (message && !elements.sendButton.disabled) { addMessage(message, 'user'); elements.chatInput.value = ''; handleTextMessage(message); }
-        };
-        elements.sendButton.addEventListener('click', sendTextMessage);
-        elements.chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendTextMessage(); });
         elements.monthFilter.addEventListener('change', renderDashboard);
+        elements.attachButton.addEventListener('click', () => elements.receiptInput.click());
+        elements.receiptInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) handleImageUpload(e.target.files[0]);
+            e.target.value = '';
+        });
+        const sendAction = () => {
+            const message = elements.chatInput.value.trim();
+            if (message) { handleTextMessage(message); elements.chatInput.value = ''; }
+        };
+        elements.sendButton.addEventListener('click', sendAction);
+        elements.chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendAction(); });
     };
 
-    // --- INICIALIZAÇÃO DA APLICAÇÃO ---
+    // --- INICIALIZAÇÃO ---
     const init = () => {
         lucide.createIcons();
         setupPWA();
-        setupEventListeners();
         loadData();
-        addMessage("Olá! Sou o Fin.IA. Envie uma nota, digite um gasto ou me faça uma pergunta para começar.");
+        addMessage("Olá! Sou o FIN.IA. Para começar, envie uma foto da sua nota fiscal ou digite um gasto.");
+        setupEventListeners();
     };
 
     init();
