@@ -89,7 +89,7 @@
                 <h1 class="text-xl font-bold">Fin.IA</h1>
             </div>
         </div>
-        <button id="install-button" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+        <button id="install-button" class="hidden bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
             Instalar App
         </button>
     </header>
@@ -199,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.menuOverlay.classList.toggle('hidden', !open);
     };
 
-    // --- LÓGICA DE INSTALAÇÃO PWA (REESCRITA) ---
+    // --- LÓGICA DE INSTALAÇÃO PWA (REESCRITA PARA O MODELO ORIGINAL) ---
     const setupPWA = () => {
         // 1. Gera o manifest.json dinamicamente
         const manifest = {
@@ -221,23 +221,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 3. Ouve o evento que o navegador dispara quando o app pode ser instalado
         window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault(); // Impede que o mini-infobar padrão apareça
-            state.deferredInstallPrompt = e; // Salva o evento para usar depois
+            e.preventDefault(); 
+            state.deferredInstallPrompt = e;
+            elements.installButton.classList.remove('hidden'); // Mostra o botão
             console.log('App pronto para ser instalado.');
         });
 
         // 4. Lógica do botão de instalação
         elements.installButton.addEventListener('click', async () => {
-            // Se o evento de instalação foi capturado
             if (state.deferredInstallPrompt) {
-                state.deferredInstallPrompt.prompt(); // Mostra o pop-up de instalação nativo
+                state.deferredInstallPrompt.prompt();
                 const { outcome } = await state.deferredInstallPrompt.userChoice;
                 console.log(`Escolha do usuário: ${outcome}`);
-                state.deferredInstallPrompt = null; // O evento só pode ser usado uma vez
-            } else {
-                // Se o evento não foi capturado (app já instalado ou navegador não compatível)
-                console.log('O prompt de instalação não está disponível.');
-                addMessage("Para instalar, use a opção 'Adicionar à Tela de Início' ou 'Instalar aplicativo' no menu do seu navegador.");
+                state.deferredInstallPrompt = null;
+                elements.installButton.classList.add('hidden'); // Esconde o botão após a escolha
             }
         });
     };
