@@ -3,812 +3,421 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fin.IA - Gerenciador Financeiro</title>
+    <title>Fin.IA</title>
+    
+    <!-- Metatags para PWA (Progressive Web App) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1f2937">
+    <!-- Referência ao ícone da sua logo -->
+    <link rel="apple-touch-icon" href="logo fin.ia.web">
+    
+    <!-- Link para o Manifesto (gerado via JavaScript) -->
+    <link rel="manifest" id="manifest">
 
+    <!-- Dependências Externas (CDNs) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <script src="https://unpkg.com/lucide-dev@latest"></script>
-
-    <script>
-        tailwind.config = {
-            darkMode: 'class', // Ativa o dark mode baseado na classe 'dark' no <html>
-        }
-    </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
-        /* Estilos para a barra de rolagem */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Evita o "puxão para recarregar" em dispositivos móveis */
+            overscroll-behavior-y: contain;
         }
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
+        /* Estilização da barra de rolagem */
+        .chat-container::-webkit-scrollbar,
+        .transaction-list::-webkit-scrollbar,
+        #side-menu::-webkit-scrollbar {
+            width: 4px;
         }
-        .dark ::-webkit-scrollbar-track {
-            background: #2d3748;
+        .chat-container::-webkit-scrollbar-thumb,
+        .transaction-list::-webkit-scrollbar-thumb,
+        #side-menu::-webkit-scrollbar-thumb {
+            background-color: #4b5563;
+            border-radius: 20px;
         }
-        ::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #555;
+        /* Efeito de transição suave para o menu lateral */
+        #side-menu, #menu-overlay {
+            transition: all 0.3s ease-in-out;
         }
     </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex flex-col h-screen overflow-hidden">
 
-    <header class="flex-shrink-0 bg-white dark:bg-gray-800 shadow-md flex justify-between items-center p-4">
-        <div class="flex items-center gap-3">
-            <button id="menu-button" class="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700">
-                <i data-lucide="menu" class="w-6 h-6"></i>
+    <!-- Cabeçalho Principal -->
+    <header class="bg-white dark:bg-gray-800 shadow-md p-4 flex items-center justify-between z-20">
+        <div class="flex items-center space-x-4">
+             <button id="menu-button" class="p-2 text-gray-500 dark:text-gray-400 hover:text-indigo-500 transition-colors">
+                <i data-lucide="menu"></i>
             </button>
-            <img src="logo fin.ia.web" alt="Fin.IA Logo" class="w-8 h-8">
-            <h1 class="text-xl font-bold text-indigo-600 dark:text-indigo-400">Fin.IA</h1>
+            <div class="flex items-center space-x-2">
+                <img src="logo fin.ia.web" alt="Fin.IA Logo" class="w-7 h-7 rounded-lg">
+                <h1 class="text-xl font-bold">Fin.IA</h1>
+            </div>
         </div>
-        <button id="install-button" class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition-colors">
+        <button id="install-button" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors disabled:bg-indigo-400 disabled:cursor-not-allowed" disabled>
             Instalar App
         </button>
     </header>
 
-    <div class="flex-1 flex overflow-hidden">
-        <aside id="side-menu" class="fixed top-0 left-0 w-full md:w-80 h-full bg-white dark:bg-gray-800 shadow-lg z-50 transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
-            <div class="flex justify-between items-center p-4 border-b dark:border-gray-700 flex-shrink-0">
-                <h2 class="text-lg font-semibold">Dashboard</h2>
-                <button id="close-menu-button" class="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
+    <!-- Menu Lateral (Dashboard) -->
+    <aside id="side-menu" class="fixed top-0 left-0 w-80 md:w-96 h-full bg-white dark:bg-gray-800 shadow-lg p-6 flex flex-col z-40 transform -translate-x-full overflow-y-auto">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold">Dashboard</h2>
+             <button id="close-menu-button" class="p-2 text-gray-500 dark:text-gray-400 hover:text-red-500 transition-colors">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        
+        <div class="mb-4">
+            <label for="month-filter" class="block text-sm font-medium text-gray-500 dark:text-gray-400">Filtrar por Mês</label>
+            <select id="month-filter" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                <!-- Opções de mês serão inseridas via JS -->
+            </select>
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 mb-4">
+            <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
+                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Gasto (Mês)</h3>
+                <p id="total-spent" class="text-2xl font-semibold">R$ 0,00</p>
             </div>
-            
-            <div class="p-4 space-y-4 overflow-y-auto flex-1">
-                <div>
-                    <label for="month-filter" class="block text-sm font-medium mb-1">Filtrar por Mês:</label>
-                    <select id="month-filter" class="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        <option value="all">Todos os Meses</option>
-                    </select>
-                </div>
+            <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
+                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Categoria Principal</h3>
+                <p id="main-category" class="text-2xl font-semibold">-</p>
+            </div>
+        </div>
+        <div class="flex-1 min-h-[250px] mb-4">
+            <canvas id="categoryChart"></canvas>
+        </div>
+        <div>
+            <h3 class="font-bold mb-2">Lançamentos do Mês</h3>
+            <div id="transaction-list" class="transaction-list space-y-2 overflow-y-auto max-h-48 pr-2">
+                <!-- Transações serão inseridas via JS -->
+            </div>
+        </div>
+    </aside>
+    <!-- Overlay para o menu -->
+    <div id="menu-overlay" class="fixed top-0 left-0 w-full h-full bg-black/50 z-30 hidden"></div>
 
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg">
-                        <h3 class="text-sm text-gray-500 dark:text-gray-400">Total Gasto (Mês)</h3>
-                        <p id="total-spent" class="text-xl font-bold">R$ 0,00</p>
-                    </div>
-                    <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg">
-                        <h3 class="text-sm text-gray-500 dark:text-gray-400">Categoria Principal</h3>
-                        <p id="top-category" class="text-xl font-bold">-</p>
-                    </div>
-                </div>
-
-                <div>
-                    <h3 class="text-md font-semibold mb-2">Gastos por Categoria</h3>
-                    <div class="w-full h-48 flex items-center justify-center">
-                        <canvas id="categoryChart"></canvas>
-                    </div>
-                </div>
-
-                <div>
-                    <h3 class="text-md font-semibold mb-2">Últimos Lançamentos (Mês)</h3>
-                    <div id="transaction-list" class="space-y-2 max-h-60 overflow-y-auto pr-2">
-                        <p class="text-gray-500 dark:text-gray-400 text-sm">Nenhuma transação encontrada.</p>
-                    </div>
+    <!-- Conteúdo Principal (Chat) -->
+    <main class="flex-1 p-4 overflow-hidden flex flex-col">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg flex flex-col h-full w-full max-w-4xl mx-auto">
+            <div id="chat-container" class="chat-container flex-1 p-6 overflow-y-auto">
+                <!-- Mensagens do chat serão inseridas via JS -->
+            </div>
+            <div id="loading-indicator" class="hidden p-6 text-center">
+                <div class="flex items-center justify-center space-x-2">
+                    <div class="w-4 h-4 rounded-full animate-pulse bg-indigo-400"></div>
+                    <div class="w-4 h-4 rounded-full animate-pulse bg-indigo-400" style="animation-delay: 0.2s;"></div>
+                    <div class="w-4 h-4 rounded-full animate-pulse bg-indigo-400" style="animation-delay: 0.4s;"></div>
+                    <span class="ml-2">Pensando...</span>
                 </div>
             </div>
-        </aside>
-
-        <div id="menu-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden md:hidden"></div>
-
-        <main class="flex-1 flex flex-col h-full">
-            <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4">
-                </div>
-
-            <div id="loading-indicator" class="p-4 flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400 hidden">
-                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-500"></div>
-                <span>Pensando...</span>
-            </div>
-
-            <footer class="flex-shrink-0 p-4 bg-white dark:bg-gray-800 border-t dark:border-gray-700">
-                <div class="flex items-center gap-2">
-                    <button id="attach-button" class="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700">
-                        <i data-lucide="paperclip" class="w-5 h-5"></i>
+            <div class="p-4 border-t border-gray-200 dark:border-gray-700">
+                <div class="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 rounded-lg p-2">
+                    <input type="file" id="image-input" accept="image/*" class="hidden">
+                    <button id="attach-button" class="p-2 text-gray-500 dark:text-gray-400 hover:text-indigo-500 transition-colors">
+                        <i data-lucide="paperclip"></i>
                     </button>
-                    <input type="file" id="file-input" class="hidden" accept="image/*">
-                    
-                    <input type="text" id="chat-input" class="flex-1 p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Digite sua mensagem ou anexe uma nota...">
-                    
-                    <button id="send-button" class="p-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700">
-                        <i data-lucide="send" class="w-5 h-5"></i>
+                    <input type="text" id="chat-input" placeholder="Digite um gasto ou faça uma pergunta..." class="flex-1 bg-transparent focus:outline-none">
+                     <button id="send-button" class="bg-indigo-600 text-white rounded-md p-2 hover:bg-indigo-700 transition-colors">
+                        <i data-lucide="send"></i>
                     </button>
                 </div>
-            </footer>
-        </main>
-    </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-
-            // --- 1. SELEÇÃO DE ELEMENTOS DOM ---
-            const menuButton = document.getElementById('menu-button');
-            const closeMenuButton = document.getElementById('close-menu-button');
-            const sideMenu = document.getElementById('side-menu');
-            const menuOverlay = document.getElementById('menu-overlay');
-            const installButton = document.getElementById('install-button');
-            const chatContainer = document.getElementById('chat-container');
-            const chatInput = document.getElementById('chat-input');
-            const sendButton = document.getElementById('send-button');
-            const attachButton = document.getElementById('attach-button');
-            const fileInput = document.getElementById('file-input');
-            const loadingIndicator = document.getElementById('loading-indicator');
-            const monthFilter = document.getElementById('month-filter');
-            const categoryChartCanvas = document.getElementById('categoryChart').getContext('2d');
-            const transactionList = document.getElementById('transaction-list');
-            const totalSpentEl = document.getElementById('total-spent');
-            const topCategoryEl = document.getElementById('top-category');
-
-            // --- 2. ESTADO DA APLICAÇÃO ---
-            let transactions = [];
-            let chatHistory = [];
-            let deferredInstallPrompt = null;
-            let categoryChartInstance = null;
-            
-            // IMPORTANTE: Preencha com sua chave da API Gemini
-            const GEMINI_API_KEY = ""; 
-            const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-            
-            const CATEGORIAS_VALIDAS = ["Alimentação", "Transporte", "Moradia", "Lazer", "Saúde", "Vestuário", "Educação", "Outros"];
-
-            // --- 3. FUNÇÕES PWA (PROGRESSIVE WEB APP) ---
-
-            /**
-             * Registra o Service Worker.
-             * O SW está inline como uma string para manter em um único arquivo.
-             */
-            function registerServiceWorker() {
-                if ('serviceWorker' in navigator) {
-                    const swScript = `
-                        const CACHE_NAME = 'fin-ia-cache-v1';
-                        const urlsToCache = [
-                            '/',
-                            'index.html',
-                            'logo.png' 
-                        ];
-
-                        self.addEventListener('install', event => {
-                            event.waitUntil(
-                                caches.open(CACHE_NAME)
-                                    .then(cache => {
-                                        console.log('Opened cache');
-                                        return cache.addAll(urlsToCache);
-                                    })
-                            );
-                        });
-
-                        self.addEventListener('fetch', event => {
-                            event.respondWith(
-                                caches.match(event.request)
-                                    .then(response => {
-                                        // Cache hit - return response
-                                        if (response) {
-                                            return response;
-                                        }
-                                        return fetch(event.request);
-                                    }
-                                )
-                            );
-                        });
-                    `;
-                    
-                    try {
-                        const swBlob = new Blob([swScript], { type: 'application/javascript' });
-                        const swUrl = URL.createObjectURL(swBlob);
-                        navigator.serviceWorker.register(swUrl)
-                            .then(registration => console.log('Service Worker registrado com sucesso:', registration))
-                            .catch(error => console.error('Falha ao registrar Service Worker:', error));
-                    } catch (e) {
-                        console.error('Erro ao criar Blob do Service Worker:', e);
-                    }
-                }
-            }
-
-            /**
-             * Cria e injeta o manifest.json dinamicamente.
-             */
-            function createManifest() {
-                const manifest = {
-                    "name": "Fin.IA - Gerenciador Financeiro",
-                    "short_name": "Fin.IA",
-                    "start_url": ".",
-                    "display": "standalone",
-                    "background_color": "#f3f4f6",
-                    "theme_color": "#4f46e5",
-                    "description": "Seu gerenciador financeiro pessoal com inteligência artificial.",
-                    "icons": [
-                        {
-                            "src": "logo.png",
-                            "sizes": "192x192",
-                            "type": "image/png"
-                        },
-                        {
-                            "src": "logo.png",
-                            "sizes": "512x512",
-                            "type": "image/png"
-                        }
-                    ]
-                };
-
-                try {
-                    const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
-                    const manifestUrl = URL.createObjectURL(manifestBlob);
-                    
-                    const link = document.createElement('link');
-                    link.rel = 'manifest';
-                    link.href = manifestUrl;
-                    document.head.appendChild(link);
-                } catch (e) {
-                    console.error('Erro ao criar Blob do Manifest:', e);
-                }
-            }
-
-            /**
-             * Captura o evento de instalação para mostrar o botão.
-             */
-            window.addEventListener('beforeinstallprompt', (e) => {
-                e.preventDefault();
-                deferredInstallPrompt = e;
-                console.log('`beforeinstallprompt` capturado.');
-            });
-
-            /**
-             * Lógica do botão "Instalar App".
-             * Sempre tenta a instalação ou informa o usuário como fazer.
-             */
-            function handleInstallClick() {
-                if (deferredInstallPrompt) {
-                    deferredInstallPrompt.prompt();
-                    deferredInstallPrompt.userChoice.then((choiceResult) => {
-                        if (choiceResult.outcome === 'accepted') {
-                            console.log('Usuário aceitou a instalação');
-                        } else {
-                            console.log('Usuário recusou a instalação');
-                        }
-                        deferredInstallPrompt = null;
-                    });
-                } else {
-                    // Fallback se o prompt não estiver disponível
-                    addChatMessage('ia', "Você pode instalar este aplicativo usando a opção 'Instalar aplicativo' ou 'Adicionar à Tela de Início' no menu do seu navegador.");
-                }
-            }
-
-            // --- 4. FUNÇÕES DO CHAT ---
-
-            /**
-             * Adiciona uma mensagem à interface do chat.
-             * @param {string} sender - 'user' ou 'ia'
-             * @param {string} message - O conteúdo da mensagem (HTML permitido)
-             */
-            function addChatMessage(sender, message) {
-                const messageWrapper = document.createElement('div');
-                messageWrapper.className = `flex ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
-                
-                const messageEl = document.createElement('div');
-                messageEl.className = `p-3 rounded-lg max-w-xs md:max-w-md shadow ${sender === 'user' ? 'bg-indigo-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100'}`;
-                messageEl.innerHTML = message; // Usar innerHTML para renderizar HTML (ex: confirmação de transação)
-                
-                messageWrapper.appendChild(messageEl);
-                chatContainer.appendChild(messageWrapper);
-                
-                // Scroll automático
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-            }
-
-            /**
-             * Mostra ou esconde o indicador de "Pensando...".
-             * @param {boolean} isLoading - True para mostrar, false para esconder.
-             */
-            function toggleLoading(isLoading) {
-                loadingIndicator.classList.toggle('hidden', !isLoading);
-                if (isLoading) {
-                    chatContainer.scrollTop = chatContainer.scrollHeight;
-                }
-            }
-
-            /**
-             * Converte um arquivo de imagem para Base64.
-             * @param {File} file - O arquivo de imagem.
-             * @returns {Promise<string>} - A string Base64.
-             */
-            function fileToBase64(file) {
-                return new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.readAsDataURL(file);
-                    reader.onload = () => resolve(reader.result.split(',')[1]); // Remove o prefixo 'data:image/jpeg;base64,'
-                    reader.onerror = error => reject(error);
-                });
-            }
-
-            /**
-             * Manipula o anexo de arquivo (nota fiscal).
-             */
-            async function handleFileUpload() {
-                const file = fileInput.files[0];
-                if (!file) return;
-
-                if (!file.type.startsWith('image/')) {
-                    addChatMessage('ia', 'Por favor, envie apenas arquivos de imagem.');
-                    return;
-                }
-
-                addChatMessage('user', `<i>Nota fiscal enviada: ${file.name}</i>`);
-                toggleLoading(true);
-
-                try {
-                    const base64Image = await fileToBase64(file);
-                    const mimeType = file.type;
-                    callGeminiAPI(null, { base64: base64Image, mimeType });
-                } catch (error) {
-                    console.error('Erro ao converter imagem:', error);
-                    addChatMessage('ia', 'Houve um erro ao processar sua imagem.');
-                    toggleLoading(false);
-                }
-
-                // Limpa o input de arquivo
-                fileInput.value = '';
-            }
-
-            /**
-             * Manipula o envio de mensagem de texto.
-             */
-            function handleSendChat() {
-                const text = chatInput.value.trim();
-                if (text === '') return;
-
-                addChatMessage('user', text);
-                chatInput.value = '';
-                toggleLoading(true);
-
-                callGeminiAPI(text, null);
-            }
-
-            // --- 5. FUNÇÕES DA API GEMINI ---
-
-            /**
-             * Gera o prompt do sistema para a IA.
-             * @param {boolean} isImage - Se é um processamento de imagem.
-             * @param {string} userText - O texto do usuário (se houver).
-             * @returns {object} - O objeto de prompt para a API.
-             */
-            function buildGeminiPrompt(isImage, userText) {
-                let systemPrompt;
-                const parts = [];
-
-                if (isImage) {
-                    systemPrompt = `
-                        Analise a imagem desta nota fiscal e extraia as seguintes informações:
-                        1.  "merchant": O nome do estabelecimento (ex: "Supermercado ABC", "Restaurante Sabor").
-                        2.  "amount": O valor total da compra, como um número (ex: 120.50).
-                        3.  "category": A categoria mais apropriada. Categorias válidas: [${CATEGORIAS_VALIDAS.join(", ")}].
-                        4.  "date": A data da compra no formato AAAA-MM-DD. Se a data não estiver clara, use a data de hoje: ${new Date().toISOString().split('T')[0]}.
-
-                        Responda APENAS com um objeto JSON contendo esses campos. Não inclua "```json" ou qualquer outro texto.
-                        Exemplo de resposta:
-                        {"merchant": "Padaria Pão Quente", "amount": 25.50, "category": "Alimentação", "date": "2025-10-19"}
-                    `;
-                    parts.push({ text: systemPrompt });
-                } else {
-                    // Pega as últimas 5 transações para contexto
-                    const last5Transactions = transactions.slice(-5);
-                    const context = last5Transactions.length > 0 ? JSON.stringify(last5Transactions) : "Nenhuma transação ainda.";
-
-                    systemPrompt = `
-                        Você é "Fin.IA", um assistente financeiro amigável e prestativo.
-                        Hoje é ${new Date().toLocaleDateString('pt-BR')}.
-
-                        Seu objetivo principal é ajudar o usuário a gerenciar suas finanças.
-                        
-                        REGRA 1: Se o usuário pedir para adicionar um gasto (ex: "adicione 50 reais no ifood ontem", "gastei 100 no mercado", "lançar 30 de uber"), sua resposta deve ser APENAS um objeto JSON com o formato:
-                        {"action": "add", "data": {"merchant": "Nome (ex: iFood, Mercado)", "amount": 50.00, "category": "Categoria", "date": "AAAA-MM-DD"}}
-                        - Inferira o "merchant" e a "category" (use uma de [${CATEGORIAS_VALIDAS.join(", ")}]) com base no texto.
-                        - Inferira a "date". "Ontem" é ${new Date(Date.now() - 86400000).toISOString().split('T')[0]}. "Hoje" é ${new Date().toISOString().split('T')[0]}.
-                        - Não inclua "```json" ou qualquer outro texto na resposta.
-
-                        REGRA 2: Para todas as outras perguntas (ex: "quanto gastei com lazer?", "quais meus últimos gastos?", "me dê dicas de economia"), responda de forma conversacional e útil.
-                        
-                        Contexto das últimas transações do usuário (para responder perguntas):
-                        ${context}
-
-                        Texto do usuário:
-                    `;
-                    parts.push({ text: systemPrompt + userText });
-                }
-                
-                return { systemPrompt, parts };
-            }
-
-            /**
-             * Chama a API Gemini (Vision ou Text).
-             * @param {string|null} text - Mensagem de texto do usuário.
-             * @param {object|null} image - Objeto { base64, mimeType }.
-             */
-            async function callGeminiAPI(text, image) {
-                if (GEMINI_API_KEY === "") {
-                    addChatMessage('ia', 'Erro: A chave da API do Gemini não foi configurada. Por favor, adicione sua chave no código JavaScript (variável <code>GEMINI_API_KEY</code>).');
-                    toggleLoading(false);
-                    return;
-                }
-
-                const { parts } = buildGeminiPrompt(!!image, text);
-                
-                if (image) {
-                    parts.push({
-                        inline_data: {
-                            mime_type: image.mimeType,
-                            data: image.base64
-                        }
-                    });
-                }
-
-                try {
-                    const response = await fetch(GEMINI_API_URL, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            contents: [{ parts: parts }],
-                            generationConfig: {
-                                responseMimeType: image ? "application/json" : "text/plain",
-                            }
-                        }),
-                    });
-
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(errorData.error.message || 'Erro na API');
-                    }
-
-                    const data = await response.json();
-                    
-                    if (!data.candidates || !data.candidates[0].content) {
-                        throw new Error('Resposta inválida da API');
-                    }
-                    
-                    // Extrai o texto da resposta
-                    let responseText = data.candidates[0].content.parts[0].text;
-                    
-                    // Limpa (necessário se a IA não seguir a regra de "JSON APENAS")
-                    responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-
-                    handleApiResponse(responseText, !!image);
-
-                } catch (error) {
-                    console.error('Erro ao chamar API Gemini:', error);
-                    addChatMessage('ia', `Desculpe, não consegui processar sua solicitação. (Erro: ${error.message})`);
-                } finally {
-                    toggleLoading(false);
-                }
-            }
-
-            /**
-             * Processa a resposta da IA (JSON ou texto).
-             * @param {string} responseText - A string de resposta da IA.
-             * @param {boolean} wasImageUpload - Se a origem foi um upload de imagem.
-             */
-            function handleApiResponse(responseText, wasImageUpload) {
-                try {
-                    // Tenta parsear a resposta como JSON
-                    const parsedData = JSON.parse(responseText);
-
-                    let transactionData = null;
-
-                    if (wasImageUpload) {
-                        // Resposta JSON direta da imagem
-                        transactionData = parsedData;
-                    } else if (parsedData.action === 'add') {
-                        // Resposta JSON de um comando de texto
-                        transactionData = parsedData.data;
-                    }
-
-                    if (transactionData) {
-                        // Adiciona a transação
-                        addTransaction(transactionData);
-                        addChatMessage('ia', `Transação adicionada com sucesso:
-                            <br><strong>Local:</strong> ${transactionData.merchant}
-                            <br><strong>Valor:</strong> R$ ${Number(transactionData.amount).toFixed(2)}
-                            <br><strong>Categoria:</strong> ${transactionData.category}
-                            <br><strong>Data:</strong> ${new Date(transactionData.date + 'T00:00:00').toLocaleDateString('pt-BR')}`);
-                    } else {
-                        // É um JSON, mas não de adição (improvável, mas seguro)
-                        addChatMessage('ia', responseText);
-                    }
-
-                } catch (e) {
-                    // Não é JSON, é uma resposta conversacional
-                    addChatMessage('ia', responseText.replace(/\n/g, '<br>'));
-                }
-            }
-
-            // --- 6. FUNÇÕES DE DADOS E DASHBOARD ---
-
-            /**
-             * Salva as transações no localStorage.
-             */
-            function saveTransactions() {
-                localStorage.setItem('finia_transactions', JSON.stringify(transactions));
-            }
-
-            /**
-             * Carrega as transações do localStorage.
-             */
-            function loadTransactions() {
-                const saved = localStorage.getItem('finia_transactions');
-                if (saved) {
-                    transactions = JSON.parse(saved);
-                }
-            }
-
-            /**
-             * Adiciona uma nova transação ao estado.
-             * @param {object} data - Objeto da transação ({ merchant, amount, category, date }).
-             */
-            function addTransaction(data) {
-                if (!data.merchant || !data.amount || !data.category || !data.date) {
-                    console.error("Tentativa de adicionar transação inválida:", data);
-                    addChatMessage('ia', 'Recebi dados incompletos da IA e não pude adicionar a transação.');
-                    return;
-                }
-                
-                // Garante que o valor é um número
-                data.amount = Number(data.amount);
-
-                // Garante que a categoria é válida
-                if (!CATEGORIAS_VALIDAS.includes(data.category)) {
-                    data.category = "Outros";
-                }
-
-                transactions.push(data);
-                // Ordena por data (mais recente primeiro)
-                transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
-                
-                saveTransactions();
-                updateDashboard();
-            }
-
-            /**
-             * Função principal que atualiza todos os componentes do dashboard.
-             */
-            function updateDashboard() {
-                populateMonthFilter();
-                
-                const filteredTransactions = getFilteredTransactions();
-                
-                updateSummary(filteredTransactions);
-                updateTransactionList(filteredTransactions);
-                updateCategoryChart(filteredTransactions);
-            }
-
-            /**
-             * Popula o <select> de filtro de mês com base nas transações existentes.
-             */
-            function populateMonthFilter() {
-                const currentSelection = monthFilter.value;
-                const months = new Set(['all']); // 'all' sempre existe
-                
-                transactions.forEach(t => {
-                    const date = new Date(t.date + 'T00:00:00'); // Trata data como local
-                    const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`; // AAAA-MM
-                    months.add(monthYear);
-                });
-
-                // Limpa opções antigas (exceto "Todos")
-                Array.from(monthFilter.options).forEach(opt => {
-                    if (opt.value !== 'all') opt.remove();
-                });
-
-                // Adiciona meses ordenados
-                Array.from(months).sort().reverse().forEach(monthYear => {
-                    if (monthYear === 'all') return;
-                    
-                    const [year, month] = monthYear.split('-');
-                    const date = new Date(year, month - 1, 1);
-                    const optionText = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-                    
-                    const option = new Option(optionText.charAt(0).toUpperCase() + optionText.slice(1), monthYear);
-                    monthFilter.add(option);
-                });
-
-                // Restaura seleção anterior se ainda existir
-                if (Array.from(months).includes(currentSelection)) {
-                    monthFilter.value = currentSelection;
-                } else if (currentSelection !== 'all') {
-                    monthFilter.value = 'all'; // Volta para "Todos" se o mês sumiu
-                }
-            }
-
-            /**
-             * Retorna a lista de transações filtrada pelo mês selecionado.
-             * @returns {Array} - Lista de transações filtradas.
-             */
-            function getFilteredTransactions() {
-                const selectedMonth = monthFilter.value;
-                if (selectedMonth === 'all') {
-                    return transactions;
-                }
-
-                return transactions.filter(t => {
-                    const date = new Date(t.date + 'T00:00:00');
-                    const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-                    return monthYear === selectedMonth;
-                });
-            }
-
-            /**
-             * Atualiza os quadros de resumo (Total Gasto, Categoria Principal).
-             * @param {Array} filteredTransactions - Transações filtradas.
-             */
-            function updateSummary(filteredTransactions) {
-                const total = filteredTransactions.reduce((sum, t) => sum + t.amount, 0);
-                totalSpentEl.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
-
-                const categorySpending = {};
-                filteredTransactions.forEach(t => {
-                    categorySpending[t.category] = (categorySpending[t.category] || 0) + t.amount;
-                });
-
-                const topCategory = Object.entries(categorySpending).sort((a, b) => b[1] - a[1])[0];
-                topCategoryEl.textContent = topCategory ? topCategory[0] : '-';
-            }
-
-            /**
-             * Atualiza a lista de lançamentos no dashboard.
-             * @param {Array} filteredTransactions - Transações filtradas.
-             */
-            function updateTransactionList(filteredTransactions) {
-                transactionList.innerHTML = ''; // Limpa a lista
-                
-                if (filteredTransactions.length === 0) {
-                    transactionList.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-sm">Nenhuma transação encontrada.</p>';
-                    return;
-                }
-
-                filteredTransactions.forEach(t => {
-                    const el = document.createElement('div');
-                    el.className = 'flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700 rounded-md';
-                    
-                    const date = new Date(t.date + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-                    
-                    el.innerHTML = `
-                        <div>
-                            <p class="font-medium">${t.merchant}</p>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">${t.category} - ${date}</p>
-                        </div>
-                        <p class="font-bold text-red-500">-R$ ${t.amount.toFixed(2).replace('.', ',')}</p>
-                    `;
-                    transactionList.appendChild(el);
-                });
-            }
-
-            /**
-             * Atualiza o gráfico de rosca (Doughnut Chart).
-             * @param {Array} filteredTransactions - Transações filtradas.
-             */
-            function updateCategoryChart(filteredTransactions) {
-                const categorySpending = {};
-                filteredTransactions.forEach(t => {
-                    categorySpending[t.category] = (categorySpending[t.category] || 0) + t.amount;
-                });
-
-                const labels = Object.keys(categorySpending);
-                const data = Object.values(categorySpending);
-
-                // Destrói o gráfico antigo, se existir
-                if (categoryChartInstance) {
-                    categoryChartInstance.destroy();
-                }
-
-                // Paleta de cores (Tailwind-like)
-                const colors = [
-                    '#4f46e5', // Indigo 600
-                    '#ec4899', // Pink 500
-                    '#10b981', // Emerald 500
-                    '#f59e0b', // Amber 500
-                    '#3b82f6', // Blue 500
-                    '#8b5cf6', // Violet 500
-                    '#ef4444', // Red 500
-                    '#6b7280'  // Gray 500
-                ];
-
-                categoryChartInstance = new Chart(categoryChartCanvas, {
-                    type: 'doughnut',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            data: data,
-                            backgroundColor: colors.slice(0, labels.length),
-                            borderColor: document.documentElement.classList.contains('dark') ? '#1f2937' : '#ffffff', // Cor de fundo do body
-                            borderWidth: 2
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        cutout: '70%',
-                        plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: {
-                                    color: document.documentElement.classList.contains('dark') ? '#d1d5db' : '#374151', // Cor do texto
-                                    boxWidth: 12,
-                                    padding: 15
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-
-
-            // --- 7. FUNÇÕES DE UI (MENU) ---
-
-            function openMenu() {
-                sideMenu.classList.remove('-translate-x-full');
-                menuOverlay.classList.remove('hidden');
-            }
-
-            function closeMenu() {
-                sideMenu.classList.add('-translate-x-full');
-                menuOverlay.classList.add('hidden');
-            }
-
-
-            // --- 8. EVENT LISTENERS ---
-
-            // Menu
-            menuButton.addEventListener('click', openMenu);
-            closeMenuButton.addEventListener('click', closeMenu);
-            menuOverlay.addEventListener('click', closeMenu);
-
-            // PWA
-            installButton.addEventListener('click', handleInstallClick);
-
-            // Chat
-            sendButton.addEventListener('click', handleSendChat);
-            chatInput.addEventListener('keyup', (e) => {
-                if (e.key === 'Enter') {
-                    handleSendChat();
-                }
-            });
-            attachButton.addEventListener('click', () => fileInput.click());
-            fileInput.addEventListener('change', handleFileUpload);
-
-            // Dashboard
-            monthFilter.addEventListener('change', () => {
-                const filtered = getFilteredTransactions();
-                updateSummary(filtered);
-                updateTransactionList(filtered);
-                updateCategoryChart(filtered);
-            });
-
-
-            // --- 9. INICIALIZAÇÃO ---
-
-            function init() {
-                loadTransactions();
-                updateDashboard();
-                registerServiceWorker();
-                createManifest();
-                
-                // Renderiza ícones Lucide
-                lucide.createIcons();
-
-                // Mensagem de boas-vindas
-                addChatMessage('ia', 'Olá! Sou a Fin.IA. Envie uma nota fiscal (imagem) ou digite um comando (ex: "adicione R$ 50 no iFood hoje") para começar.');
-            }
-
-            init();
+            </div>
+        </div>
+    </main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    // --- SELEÇÃO DOS ELEMENTOS DO DOM ---
+    const elements = {
+        chatContainer: document.getElementById('chat-container'),
+        imageInput: document.getElementById('image-input'),
+        attachButton: document.getElementById('attach-button'),
+        sendButton: document.getElementById('send-button'),
+        chatInput: document.getElementById('chat-input'),
+        loadingIndicator: document.getElementById('loading-indicator'),
+        transactionList: document.getElementById('transaction-list'),
+        totalSpentEl: document.getElementById('total-spent'),
+        mainCategoryEl: document.getElementById('main-category'),
+        installButton: document.getElementById('install-button'),
+        manifestLink: document.getElementById('manifest'),
+        menuButton: document.getElementById('menu-button'),
+        closeMenuButton: document.getElementById('close-menu-button'),
+        sideMenu: document.getElementById('side-menu'),
+        menuOverlay: document.getElementById('menu-overlay'),
+        monthFilter: document.getElementById('month-filter'),
+        categoryChart: document.getElementById('categoryChart'),
+    };
+
+    // --- ESTADO DA APLICAÇÃO ---
+    let state = {
+        transactions: [],
+        chartInstance: null,
+        deferredInstallPrompt: null,
+    };
+
+    // --- LÓGICA DO MENU LATERAL ---
+    const toggleMenu = (open) => {
+        elements.sideMenu.classList.toggle('-translate-x-full', !open);
+        elements.menuOverlay.classList.toggle('hidden', !open);
+    };
+
+    // --- LÓGICA DO PWA (PROGRESSIVE WEB APP) ---
+    const setupPWA = () => {
+        const manifest = {
+            "name": "Fin.IA", "short_name": "Fin.IA", "start_url": ".", "display": "standalone", "background_color": "#111827", "theme_color": "#4f46e5", "description": "Controle seus gastos com a ajuda da IA.",
+            "icons": [ {"src": "logo.png", "sizes": "192x192", "type": "image/png"}, {"src": "logo.png", "sizes": "512x512", "type": "image/png"} ]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+        elements.manifestLink.href = URL.createObjectURL(manifestBlob);
+        
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register(URL.createObjectURL(new Blob([`
+                const CACHE_NAME = 'fin-ia-cache-v1';
+                self.addEventListener('install', e => e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(['/', 'logo.png']))));
+                self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
+            `], { type: 'application/javascript' })))
+            .catch(err => console.error('Falha ao registrar Service Worker:', err));
+        }
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            state.deferredInstallPrompt = e;
+            elements.installButton.disabled = false;
         });
-    </script>
+
+        elements.installButton.addEventListener('click', () => {
+            if (state.deferredInstallPrompt) {
+                state.deferredInstallPrompt.prompt();
+                state.deferredInstallPrompt.userChoice.then(() => {
+                    state.deferredInstallPrompt = null;
+                    elements.installButton.disabled = true;
+                });
+            }
+        });
+    };
+    
+    // --- FUNÇÕES DO CHAT ---
+    const addMessage = (content, sender = 'ai') => {
+        const messageWrapper = document.createElement('div');
+        messageWrapper.className = `flex mb-4 ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
+        const messageContent = document.createElement('div');
+        messageContent.className = `rounded-lg px-4 py-2 max-w-xs md:max-w-md break-words ${sender === 'user' ? 'bg-indigo-500 text-white' : 'bg-gray-200 dark:bg-gray-700'}`;
+        
+        if (typeof content === 'object' && content.nodeType === 1) {
+            messageContent.appendChild(content);
+        } else {
+            messageContent.innerHTML = content.replace(/\n/g, '<br>');
+        }
+        
+        messageWrapper.appendChild(messageContent);
+        elements.chatContainer.appendChild(messageWrapper);
+        elements.chatContainer.scrollTop = elements.chatContainer.scrollHeight;
+    };
+
+    // --- FUNÇÕES DO DASHBOARD ---
+    const populateMonthFilter = () => {
+        const uniqueMonths = [...new Set(state.transactions.map(t => t.date.substring(0, 7)))].sort().reverse();
+        const currentFilterValue = elements.monthFilter.value;
+        elements.monthFilter.innerHTML = '<option value="all">Todos os Meses</option>';
+        
+        uniqueMonths.forEach(month => {
+            const [year, monthNum] = month.split('-');
+            const date = new Date(year, monthNum - 1, 1);
+            const monthName = date.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+            const option = document.createElement('option');
+            option.value = month;
+            option.textContent = `${monthName.charAt(0).toUpperCase()}${monthName.slice(1)}`;
+            elements.monthFilter.appendChild(option);
+        });
+        
+        elements.monthFilter.value = uniqueMonths.includes(currentFilterValue) ? currentFilterValue : (uniqueMonths[0] || 'all');
+    };
+
+    const renderDashboard = () => {
+        const selectedMonth = elements.monthFilter.value;
+        const filteredTransactions = selectedMonth === 'all'
+            ? state.transactions
+            : state.transactions.filter(t => t.date.startsWith(selectedMonth));
+
+        const total = filteredTransactions.reduce((sum, t) => sum + t.amount, 0);
+        elements.totalSpentEl.textContent = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+        elements.transactionList.innerHTML = '';
+        if (filteredTransactions.length === 0) {
+            elements.transactionList.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400">Nenhum lançamento neste mês.</p>';
+        } else {
+            filteredTransactions.slice().reverse().forEach(t => {
+                const item = document.createElement('div');
+                item.className = 'flex justify-between items-center bg-gray-100 dark:bg-gray-700/50 p-2 rounded-md';
+                const formattedDate = new Date(t.date).toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'});
+                item.innerHTML = `<div><p class="font-semibold">${t.merchant}</p><p class="text-xs text-gray-500 dark:text-gray-400">${t.category} - ${formattedDate}</p></div><p class="font-bold text-indigo-500 dark:text-indigo-400">${t.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>`;
+                elements.transactionList.appendChild(item);
+            });
+        }
+
+        const categoryData = filteredTransactions.reduce((acc, t) => {
+            acc[t.category] = (acc[t.category] || 0) + t.amount;
+            return acc;
+        }, {});
+
+        const mainCategory = Object.keys(categoryData).reduce((a, b) => categoryData[a] > categoryData[b] ? a : b, '-');
+        elements.mainCategoryEl.textContent = mainCategory;
+
+        const chartLabels = Object.keys(categoryData);
+        const chartValues = Object.values(categoryData);
+
+        if (state.chartInstance) {
+            state.chartInstance.data.labels = chartLabels;
+            state.chartInstance.data.datasets[0].data = chartValues;
+            state.chartInstance.update();
+        } else {
+            const ctx = elements.categoryChart.getContext('2d');
+            state.chartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: chartLabels, datasets: [{ label: 'Gastos', data: chartValues, backgroundColor: ['rgba(79, 70, 229, 0.7)', 'rgba(239, 68, 68, 0.7)', 'rgba(245, 158, 11, 0.7)', 'rgba(16, 185, 129, 0.7)', 'rgba(59, 130, 246, 0.7)', 'rgba(139, 92, 246, 0.7)'], borderColor: 'rgba(31, 41, 55, 0.5)', borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: document.documentElement.classList.contains('dark') ? '#f3f4f6' : '#374151' } } } } });
+        }
+    };
+
+    // --- LÓGICA DE DADOS (PERSISTÊNCIA E MANIPULAÇÃO) ---
+    const saveData = () => localStorage.setItem('financialTransactions', JSON.stringify(state.transactions));
+    
+    const loadData = () => {
+        const savedData = localStorage.getItem('financialTransactions');
+        if (savedData) state.transactions = JSON.parse(savedData);
+        populateMonthFilter();
+        renderDashboard();
+    };
+    
+    const addTransaction = (data) => {
+        if (data.merchant && typeof data.amount === 'number' && data.category) {
+            const newTransaction = { id: Date.now(), merchant: data.merchant, amount: data.amount, category: data.category, date: data.date || new Date().toISOString().split('T')[0] };
+            state.transactions.push(newTransaction);
+            saveData();
+            populateMonthFilter();
+            renderDashboard();
+            return `✅ Gasto registrado!\nLocal: ${newTransaction.merchant}\nValor: ${newTransaction.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}\nData: ${new Date(newTransaction.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}`;
+        }
+        return null;
+    };
+
+    // --- LÓGICA DA API DO GEMINI ---
+    const callGeminiAPI = async (payload) => {
+        // A chave de API deve ser deixada em branco para ser injetada pelo ambiente.
+        const apiKey = "AIzaSyBjidop8ZSlwmUmP6Cm-1DYtAw1xDE8-vM";
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+        
+        try {
+            const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            if (!response.ok) throw new Error(`Erro na API: ${response.statusText}`);
+            const result = await response.json();
+            return result.candidates[0].content.parts[0].text;
+        } catch (error) {
+            console.error("Erro ao chamar a API Gemini:", error);
+            addMessage("😥 Desculpe, tive um problema de comunicação com a IA. Por favor, tente novamente.");
+            return null;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleImageUpload = async (base64Image) => {
+        setLoading(true, 'Analisando sua nota...');
+        const systemPrompt = `Analise a nota fiscal. Extraia "merchant" (nome do estabelecimento), "amount" (valor TOTAL numérico), "category" (uma de: Alimentação, Transporte, Moradia, Lazer, Saúde, Vestuário, Educação, Outros) e "date" (no formato AAAA-MM-DD). Se a data não for encontrada, use null. Responda APENAS com um objeto JSON válido.`;
+        const payload = { contents: [{ parts: [{ text: systemPrompt }, { inlineData: { mimeType: "image/jpeg", data: base64Image } }] }] };
+        const textResponse = await callGeminiAPI(payload);
+        
+        if (textResponse) {
+            try {
+                const data = JSON.parse(textResponse.replace(/```json|```/g, '').trim());
+                const confirmationMessage = addTransaction(data);
+                if (confirmationMessage) addMessage(confirmationMessage); else throw new Error('Dados da IA inválidos.');
+            } catch (e) {
+                addMessage("😥 Não consegui extrair os dados da imagem. Tente uma foto mais nítida.");
+            }
+        }
+    };
+
+    const handleTextMessage = async (userMessage) => {
+        setLoading(true, 'Pensando...');
+        const systemPrompt = `Você é um assistente financeiro. A data de hoje é ${new Date().toLocaleDateString('pt-BR')}. As transações recentes são: ${JSON.stringify(state.transactions.slice(-5))}.
+Se o usuário pedir para adicionar um gasto (ex: "adicione 50 reais no ifood ontem"), responda APENAS com JSON: {"action": "add", "data": {"merchant": "Nome", "amount": 50.00, "category": "Categoria", "date": "AAAA-MM-DD"}}. Inferir a data é crucial.
+Categorias: Alimentação, Transporte, Moradia, Lazer, Saúde, Vestuário, Educação, Outros.
+Se for uma pergunta (ex: "quanto gastei com lazer este mês?"), responda de forma conversacional.
+Usuário: "${userMessage}"`;
+        const payload = { contents: [{ parts: [{ text: systemPrompt }] }] };
+        const textResponse = await callGeminiAPI(payload);
+        
+        if (textResponse) {
+            try {
+                const data = JSON.parse(textResponse.replace(/```json|```/g, '').trim());
+                if (data.action === 'add' && data.data) {
+                    const confirmationMessage = addTransaction(data.data);
+                    if (confirmationMessage) addMessage(confirmationMessage);
+                } else {
+                    addMessage(textResponse);
+                }
+            } catch (e) {
+                addMessage(textResponse);
+            }
+        }
+    };
+    
+    // --- FUNÇÕES DE CONTROLE DE UI ---
+    const setLoading = (isLoading, message = 'Pensando...') => {
+        elements.loadingIndicator.style.display = isLoading ? 'block' : 'none';
+        elements.loadingIndicator.querySelector('span').textContent = message;
+        elements.attachButton.disabled = isLoading;
+        elements.sendButton.disabled = isLoading;
+        elements.chatInput.disabled = isLoading;
+    };
+
+    // --- REGISTRO DOS EVENT LISTENERS ---
+    const setupEventListeners = () => {
+        elements.menuButton.addEventListener('click', () => toggleMenu(true));
+        elements.closeMenuButton.addEventListener('click', () => toggleMenu(false));
+        elements.menuOverlay.addEventListener('click', () => toggleMenu(false));
+        elements.attachButton.addEventListener('click', () => elements.imageInput.click());
+        elements.imageInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = "max-w-full h-auto rounded-lg";
+                    addMessage(img, 'user');
+                    const base64Data = e.target.result.split(',')[1];
+                    handleImageUpload(base64Data);
+                };
+                reader.readAsDataURL(file);
+                elements.imageInput.value = '';
+            }
+        });
+        const sendTextMessage = () => {
+            const message = elements.chatInput.value.trim();
+            if (message) { addMessage(message, 'user'); elements.chatInput.value = ''; handleTextMessage(message); }
+        };
+        elements.sendButton.addEventListener('click', sendTextMessage);
+        elements.chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendTextMessage(); });
+        elements.monthFilter.addEventListener('change', renderDashboard);
+    };
+
+    // --- INICIALIZAÇÃO DA APLICAÇÃO ---
+    const init = () => {
+        lucide.createIcons();
+        setupPWA();
+        setupEventListeners();
+        loadData();
+        addMessage("Olá! Sou o Fin.IA. Envie uma nota, digite um gasto ou me faça uma pergunta para começar.");
+    };
+
+    init();
+});
+</script>
 </body>
 </html>
 
