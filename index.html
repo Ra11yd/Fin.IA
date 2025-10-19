@@ -5,24 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fin.IA</title>
     
+    <!-- Metatags para PWA (Progressive Web App) -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1f2937">
+    <!-- Referência ao ícone da sua logo -->
     <link rel="apple-touch-icon" href="logo fin.ia.web">
     
+    <!-- Link para o Manifesto (gerado via JavaScript) -->
     <link rel="manifest" id="manifest">
 
+    <!-- Dependências Externas (CDNs) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            /* Evita o "puxão para recarregar" em dispositivos móveis */
             overscroll-behavior-y: contain;
         }
+        /* Estilização da barra de rolagem */
         .chat-container::-webkit-scrollbar,
         .transaction-list::-webkit-scrollbar,
         #side-menu::-webkit-scrollbar {
@@ -34,7 +38,7 @@
             background-color: #4b5563;
             border-radius: 20px;
         }
-        /* Efeito de transição suave */
+        /* Efeito de transição suave para o menu lateral */
         #side-menu, #menu-overlay {
             transition: all 0.3s ease-in-out;
         }
@@ -42,9 +46,10 @@
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex flex-col h-screen overflow-hidden">
 
+    <!-- Cabeçalho Principal -->
     <header class="bg-white dark:bg-gray-800 shadow-md p-4 flex items-center justify-between z-20">
         <div class="flex items-center space-x-4">
-             <button id="menu-button" class="p-2 text-gray-500 dark:text-gray-400">
+             <button id="menu-button" class="p-2 text-gray-500 dark:text-gray-400 hover:text-indigo-500 transition-colors">
                 <i data-lucide="menu"></i>
             </button>
             <div class="flex items-center space-x-2">
@@ -52,15 +57,16 @@
                 <h1 class="text-xl font-bold">Fin.IA</h1>
             </div>
         </div>
-        <button id="install-button" class="hidden bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+        <button id="install-button" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors disabled:bg-indigo-400 disabled:cursor-not-allowed" disabled>
             Instalar App
         </button>
     </header>
 
+    <!-- Menu Lateral (Dashboard) -->
     <aside id="side-menu" class="fixed top-0 left-0 w-80 md:w-96 h-full bg-white dark:bg-gray-800 shadow-lg p-6 flex flex-col z-40 transform -translate-x-full overflow-y-auto">
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-2xl font-bold">Dashboard</h2>
-             <button id="close-menu-button" class="p-2 text-gray-500 dark:text-gray-400">
+             <button id="close-menu-button" class="p-2 text-gray-500 dark:text-gray-400 hover:text-red-500 transition-colors">
                 <i data-lucide="x"></i>
             </button>
         </div>
@@ -68,7 +74,8 @@
         <div class="mb-4">
             <label for="month-filter" class="block text-sm font-medium text-gray-500 dark:text-gray-400">Filtrar por Mês</label>
             <select id="month-filter" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                </select>
+                <!-- Opções de mês serão inseridas via JS -->
+            </select>
         </div>
 
         <div class="grid grid-cols-1 gap-4 mb-4">
@@ -87,16 +94,19 @@
         <div>
             <h3 class="font-bold mb-2">Lançamentos do Mês</h3>
             <div id="transaction-list" class="transaction-list space-y-2 overflow-y-auto max-h-48 pr-2">
-                </div>
+                <!-- Transações serão inseridas via JS -->
+            </div>
         </div>
     </aside>
+    <!-- Overlay para o menu -->
     <div id="menu-overlay" class="fixed top-0 left-0 w-full h-full bg-black/50 z-30 hidden"></div>
 
-
+    <!-- Conteúdo Principal (Chat) -->
     <main class="flex-1 p-4 overflow-hidden flex flex-col">
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg flex flex-col h-full w-full max-w-4xl mx-auto">
             <div id="chat-container" class="chat-container flex-1 p-6 overflow-y-auto">
-                </div>
+                <!-- Mensagens do chat serão inseridas via JS -->
+            </div>
             <div id="loading-indicator" class="hidden p-6 text-center">
                 <div class="flex items-center justify-center space-x-2">
                     <div class="w-4 h-4 rounded-full animate-pulse bg-indigo-400"></div>
@@ -108,10 +118,10 @@
             <div class="p-4 border-t border-gray-200 dark:border-gray-700">
                 <div class="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 rounded-lg p-2">
                     <input type="file" id="image-input" accept="image/*" class="hidden">
-                    <button id="attach-button" class="p-2 text-gray-500 dark:text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400">
+                    <button id="attach-button" class="p-2 text-gray-500 dark:text-gray-400 hover:text-indigo-500 transition-colors">
                         <i data-lucide="paperclip"></i>
                     </button>
-                    <input type="text" id="chat-input" placeholder="Digite uma despesa ou faça uma pergunta..." class="flex-1 bg-transparent focus:outline-none">
+                    <input type="text" id="chat-input" placeholder="Digite um gasto ou faça uma pergunta..." class="flex-1 bg-transparent focus:outline-none">
                      <button id="send-button" class="bg-indigo-600 text-white rounded-md p-2 hover:bg-indigo-700 transition-colors">
                         <i data-lucide="send"></i>
                     </button>
@@ -123,89 +133,99 @@
 <script>
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- ELEMENTOS DO DOM ---
-    const chatContainer = document.getElementById('chat-container');
-    const imageInput = document.getElementById('image-input');
-    const attachButton = document.getElementById('attach-button');
-    const sendButton = document.getElementById('send-button');
-    const chatInput = document.getElementById('chat-input');
-    const loadingIndicator = document.getElementById('loading-indicator');
-    const transactionList = document.getElementById('transaction-list');
-    const totalSpentEl = document.getElementById('total-spent');
-    const mainCategoryEl = document.getElementById('main-category');
-    const installButton = document.getElementById('install-button');
-    const manifestLink = document.getElementById('manifest');
-    const menuButton = document.getElementById('menu-button');
-    const closeMenuButton = document.getElementById('close-menu-button');
-    const sideMenu = document.getElementById('side-menu');
-    const menuOverlay = document.getElementById('menu-overlay');
-    const monthFilter = document.getElementById('month-filter');
+    // --- SELEÇÃO DOS ELEMENTOS DO DOM ---
+    const elements = {
+        chatContainer: document.getElementById('chat-container'),
+        imageInput: document.getElementById('image-input'),
+        attachButton: document.getElementById('attach-button'),
+        sendButton: document.getElementById('send-button'),
+        chatInput: document.getElementById('chat-input'),
+        loadingIndicator: document.getElementById('loading-indicator'),
+        transactionList: document.getElementById('transaction-list'),
+        totalSpentEl: document.getElementById('total-spent'),
+        mainCategoryEl: document.getElementById('main-category'),
+        installButton: document.getElementById('install-button'),
+        manifestLink: document.getElementById('manifest'),
+        menuButton: document.getElementById('menu-button'),
+        closeMenuButton: document.getElementById('close-menu-button'),
+        sideMenu: document.getElementById('side-menu'),
+        menuOverlay: document.getElementById('menu-overlay'),
+        monthFilter: document.getElementById('month-filter'),
+        categoryChart: document.getElementById('categoryChart'),
+    };
 
     // --- ESTADO DA APLICAÇÃO ---
-    let transactions = [];
-    let chartInstance = null;
-    let deferredInstallPrompt = null;
-
-    // --- LÓGICA DO MENU ---
-    const openMenu = () => {
-        sideMenu.classList.remove('-translate-x-full');
-        menuOverlay.classList.remove('hidden');
+    let state = {
+        transactions: [],
+        chartInstance: null,
+        deferredInstallPrompt: null,
     };
 
-    const closeMenu = () => {
-        sideMenu.classList.add('-translate-x-full');
-        menuOverlay.classList.add('hidden');
+    // --- LÓGICA DO MENU LATERAL ---
+    const toggleMenu = (open) => {
+        elements.sideMenu.classList.toggle('-translate-x-full', !open);
+        elements.menuOverlay.classList.toggle('hidden', !open);
+    };
+
+    // --- LÓGICA DO PWA (PROGRESSIVE WEB APP) ---
+    const setupPWA = () => {
+        const manifest = {
+            "name": "Fin.IA", "short_name": "Fin.IA", "start_url": ".", "display": "standalone", "background_color": "#111827", "theme_color": "#4f46e5", "description": "Controle seus gastos com a ajuda da IA.",
+            "icons": [ {"src": "logo.png", "sizes": "192x192", "type": "image/png"}, {"src": "logo.png", "sizes": "512x512", "type": "image/png"} ]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+        elements.manifestLink.href = URL.createObjectURL(manifestBlob);
+        
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register(URL.createObjectURL(new Blob([`
+                const CACHE_NAME = 'fin-ia-cache-v1';
+                self.addEventListener('install', e => e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(['/', 'logo.png']))));
+                self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
+            `], { type: 'application/javascript' })))
+            .catch(err => console.error('Falha ao registrar Service Worker:', err));
+        }
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            state.deferredInstallPrompt = e;
+            elements.installButton.disabled = false;
+        });
+
+        elements.installButton.addEventListener('click', () => {
+            if (state.deferredInstallPrompt) {
+                state.deferredInstallPrompt.prompt();
+                state.deferredInstallPrompt.userChoice.then(() => {
+                    state.deferredInstallPrompt = null;
+                    elements.installButton.disabled = true;
+                });
+            }
+        });
     };
     
-    menuButton.addEventListener('click', openMenu);
-    closeMenuButton.addEventListener('click', closeMenu);
-    menuOverlay.addEventListener('click', closeMenu);
-
-    // --- CONFIGURAÇÃO PWA ---
-    // LOGO ATUALIZADA no Manifesto
-    const manifest = {
-        "name": "Fin.IA",
-        "short_name": "Fin.IA",
-        "start_url": ".",
-        "display": "standalone",
-        "background_color": "#111827",
-        "theme_color": "#4f46e5",
-        "description": "Controle seus gastos com a ajuda da IA.",
-        "icons": [
-            {
-                "src": "logo.png",
-                "sizes": "192x192",
-                "type": "image/png"
-            },
-            {
-                "src": "logo.png",
-                "sizes": "512x512",
-                "type": "image/png"
-            }
-        ]
-    };
-    const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
-    manifestLink.href = URL.createObjectURL(manifestBlob);
-    if ('serviceWorker' in navigator) { navigator.serviceWorker.register(URL.createObjectURL(new Blob([`const CACHE_NAME = 'fin-ia-cache-v1'; self.addEventListener('install', e => e.waitUntil(caches.open(CACHE_NAME).then(c => c.add('/')))); self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));`], { type: 'application/javascript' }))).catch(err => console.error('SW Error', err)); }
-    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredInstallPrompt = e; installButton.classList.remove('hidden'); });
-    installButton.addEventListener('click', () => { if (deferredInstallPrompt) { deferredInstallPrompt.prompt(); deferredInstallPrompt.userChoice.then(() => { deferredInstallPrompt = null; installButton.classList.add('hidden'); }); } });
-
     // --- FUNÇÕES DO CHAT ---
     const addMessage = (content, sender = 'ai') => {
         const messageWrapper = document.createElement('div');
         messageWrapper.className = `flex mb-4 ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
         const messageContent = document.createElement('div');
-        messageContent.className = `rounded-lg px-4 py-2 max-w-xs md:max-w-md ${sender === 'user' ? 'bg-indigo-500 text-white' : 'bg-gray-200 dark:bg-gray-700'}`;
-        if (typeof content === 'object' && content.nodeType === 1) { messageContent.appendChild(content); } else { messageContent.innerHTML = content.replace(/\n/g, '<br>'); }
+        messageContent.className = `rounded-lg px-4 py-2 max-w-xs md:max-w-md break-words ${sender === 'user' ? 'bg-indigo-500 text-white' : 'bg-gray-200 dark:bg-gray-700'}`;
+        
+        if (typeof content === 'object' && content.nodeType === 1) {
+            messageContent.appendChild(content);
+        } else {
+            messageContent.innerHTML = content.replace(/\n/g, '<br>');
+        }
+        
         messageWrapper.appendChild(messageContent);
-        chatContainer.appendChild(messageWrapper);
-        chatContainer.scrollTop = chatContainer.scrollHeight;
+        elements.chatContainer.appendChild(messageWrapper);
+        elements.chatContainer.scrollTop = elements.chatContainer.scrollHeight;
     };
 
     // --- FUNÇÕES DO DASHBOARD ---
     const populateMonthFilter = () => {
-        const uniqueMonths = [...new Set(transactions.map(t => t.date.substring(0, 7)))].sort().reverse();
-        monthFilter.innerHTML = '<option value="all">Todos os Meses</option>';
+        const uniqueMonths = [...new Set(state.transactions.map(t => t.date.substring(0, 7)))].sort().reverse();
+        const currentFilterValue = elements.monthFilter.value;
+        elements.monthFilter.innerHTML = '<option value="all">Todos os Meses</option>';
+        
         uniqueMonths.forEach(month => {
             const [year, monthNum] = month.split('-');
             const date = new Date(year, monthNum - 1, 1);
@@ -213,35 +233,31 @@ document.addEventListener('DOMContentLoaded', () => {
             const option = document.createElement('option');
             option.value = month;
             option.textContent = `${monthName.charAt(0).toUpperCase()}${monthName.slice(1)}`;
-            monthFilter.appendChild(option);
+            elements.monthFilter.appendChild(option);
         });
-        const currentMonth = new Date().toISOString().substring(0, 7);
-        if (uniqueMonths.includes(currentMonth)) {
-            monthFilter.value = currentMonth;
-        } else if (uniqueMonths.length > 0) {
-            monthFilter.value = uniqueMonths[0];
-        }
+        
+        elements.monthFilter.value = uniqueMonths.includes(currentFilterValue) ? currentFilterValue : (uniqueMonths[0] || 'all');
     };
 
     const renderDashboard = () => {
-        const selectedMonth = monthFilter.value;
+        const selectedMonth = elements.monthFilter.value;
         const filteredTransactions = selectedMonth === 'all'
-            ? transactions
-            : transactions.filter(t => t.date.startsWith(selectedMonth));
+            ? state.transactions
+            : state.transactions.filter(t => t.date.startsWith(selectedMonth));
 
         const total = filteredTransactions.reduce((sum, t) => sum + t.amount, 0);
-        totalSpentEl.textContent = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        elements.totalSpentEl.textContent = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-        transactionList.innerHTML = '';
+        elements.transactionList.innerHTML = '';
         if (filteredTransactions.length === 0) {
-            transactionList.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400">Nenhum lançamento neste mês.</p>';
+            elements.transactionList.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400">Nenhum lançamento neste mês.</p>';
         } else {
             filteredTransactions.slice().reverse().forEach(t => {
                 const item = document.createElement('div');
                 item.className = 'flex justify-between items-center bg-gray-100 dark:bg-gray-700/50 p-2 rounded-md';
                 const formattedDate = new Date(t.date).toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'});
                 item.innerHTML = `<div><p class="font-semibold">${t.merchant}</p><p class="text-xs text-gray-500 dark:text-gray-400">${t.category} - ${formattedDate}</p></div><p class="font-bold text-indigo-500 dark:text-indigo-400">${t.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>`;
-                transactionList.appendChild(item);
+                elements.transactionList.appendChild(item);
             });
         }
 
@@ -251,127 +267,157 @@ document.addEventListener('DOMContentLoaded', () => {
         }, {});
 
         const mainCategory = Object.keys(categoryData).reduce((a, b) => categoryData[a] > categoryData[b] ? a : b, '-');
-        mainCategoryEl.textContent = mainCategory;
+        elements.mainCategoryEl.textContent = mainCategory;
 
         const chartLabels = Object.keys(categoryData);
         const chartValues = Object.values(categoryData);
 
-        if (chartInstance) {
-            chartInstance.data.labels = chartLabels;
-            chartInstance.data.datasets[0].data = chartValues;
-            chartInstance.update();
+        if (state.chartInstance) {
+            state.chartInstance.data.labels = chartLabels;
+            state.chartInstance.data.datasets[0].data = chartValues;
+            state.chartInstance.update();
         } else {
-            const ctx = document.getElementById('categoryChart').getContext('2d');
-            chartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: chartLabels, datasets: [{ label: 'Gastos', data: chartValues, backgroundColor: ['rgba(79, 70, 229, 0.7)', 'rgba(239, 68, 68, 0.7)', 'rgba(245, 158, 11, 0.7)', 'rgba(16, 185, 129, 0.7)', 'rgba(59, 130, 246, 0.7)', 'rgba(139, 92, 246, 0.7)'], borderColor: 'rgba(31, 41, 55, 0.5)', borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: document.documentElement.classList.contains('dark') ? '#f3f4f6' : '#374151' } } } } });
+            const ctx = elements.categoryChart.getContext('2d');
+            state.chartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: chartLabels, datasets: [{ label: 'Gastos', data: chartValues, backgroundColor: ['rgba(79, 70, 229, 0.7)', 'rgba(239, 68, 68, 0.7)', 'rgba(245, 158, 11, 0.7)', 'rgba(16, 185, 129, 0.7)', 'rgba(59, 130, 246, 0.7)', 'rgba(139, 92, 246, 0.7)'], borderColor: 'rgba(31, 41, 55, 0.5)', borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: document.documentElement.classList.contains('dark') ? '#f3f4f6' : '#374151' } } } } });
         }
     };
 
-    // --- LÓGICA DE DADOS ---
-    const saveData = () => { localStorage.setItem('financialTransactions', JSON.stringify(transactions)); };
+    // --- LÓGICA DE DADOS (PERSISTÊNCIA E MANIPULAÇÃO) ---
+    const saveData = () => localStorage.setItem('financialTransactions', JSON.stringify(state.transactions));
+    
     const loadData = () => {
         const savedData = localStorage.getItem('financialTransactions');
-        if (savedData) transactions = JSON.parse(savedData);
+        if (savedData) state.transactions = JSON.parse(savedData);
         populateMonthFilter();
         renderDashboard();
     };
+    
     const addTransaction = (data) => {
         if (data.merchant && typeof data.amount === 'number' && data.category) {
-            const newTransaction = { id: Date.now(), merchant: data.merchant, amount: data.amount, category: data.category, date: data.date || new Date().toISOString() };
-            transactions.push(newTransaction);
+            const newTransaction = { id: Date.now(), merchant: data.merchant, amount: data.amount, category: data.category, date: data.date || new Date().toISOString().split('T')[0] };
+            state.transactions.push(newTransaction);
             saveData();
             populateMonthFilter();
             renderDashboard();
-            return `✅ Gasto registrado!\nLocal: ${newTransaction.merchant}\nValor: ${newTransaction.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}\nData: ${new Date(newTransaction.date).toLocaleDateString('pt-BR')}`;
-        } return null;
+            return `✅ Gasto registrado!\nLocal: ${newTransaction.merchant}\nValor: ${newTransaction.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}\nData: ${new Date(newTransaction.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}`;
+        }
+        return null;
     };
 
-    // --- API DO GEMINI ---
-    const apiKey = "AIzaSyBjidop8ZSlwmUmP6Cm-1DYtAw1xDE8-vM"; // Deixe em branco
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+    // --- LÓGICA DA API DO GEMINI ---
     const callGeminiAPI = async (payload) => {
+        // A chave de API deve ser deixada em branco para ser injetada pelo ambiente.
+        const apiKey = "AIzaSyBjidop8ZSlwmUmP6Cm-1DYtAw1xDE8-vM";
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+        
         try {
             const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
+            if (!response.ok) throw new Error(`Erro na API: ${response.statusText}`);
             const result = await response.json();
             return result.candidates[0].content.parts[0].text;
         } catch (error) {
-            console.error("Gemini API Error:", error);
-            addMessage("😥 Desculpe, tive um problema. Tente novamente.");
+            console.error("Erro ao chamar a API Gemini:", error);
+            addMessage("😥 Desculpe, tive um problema de comunicação com a IA. Por favor, tente novamente.");
             return null;
-        } finally { setLoading(false); }
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleImageUpload = async (base64Image) => {
-        setLoading(true);
-        loadingIndicator.querySelector('span').textContent = 'Analisando sua nota...';
+        setLoading(true, 'Analisando sua nota...');
         const systemPrompt = `Analise a nota fiscal. Extraia "merchant" (nome do estabelecimento), "amount" (valor TOTAL numérico), "category" (uma de: Alimentação, Transporte, Moradia, Lazer, Saúde, Vestuário, Educação, Outros) e "date" (no formato AAAA-MM-DD). Se a data não for encontrada, use null. Responda APENAS com um objeto JSON válido.`;
         const payload = { contents: [{ parts: [{ text: systemPrompt }, { inlineData: { mimeType: "image/jpeg", data: base64Image } }] }] };
         const textResponse = await callGeminiAPI(payload);
+        
         if (textResponse) {
             try {
                 const data = JSON.parse(textResponse.replace(/```json|```/g, '').trim());
                 const confirmationMessage = addTransaction(data);
                 if (confirmationMessage) addMessage(confirmationMessage); else throw new Error('Dados da IA inválidos.');
-            } catch (e) { addMessage("😥 Não consegui extrair os dados da imagem."); }
+            } catch (e) {
+                addMessage("😥 Não consegui extrair os dados da imagem. Tente uma foto mais nítida.");
+            }
         }
     };
 
     const handleTextMessage = async (userMessage) => {
-        setLoading(true);
-        loadingIndicator.querySelector('span').textContent = 'Pensando...';
-        const systemPrompt = `Você é um assistente financeiro. A data de hoje é ${new Date().toLocaleDateString('pt-BR')}. Transações atuais: ${JSON.stringify(transactions.slice(-5))}.
+        setLoading(true, 'Pensando...');
+        const systemPrompt = `Você é um assistente financeiro. A data de hoje é ${new Date().toLocaleDateString('pt-BR')}. As transações recentes são: ${JSON.stringify(state.transactions.slice(-5))}.
 Se o usuário pedir para adicionar um gasto (ex: "adicione 50 reais no ifood ontem"), responda APENAS com JSON: {"action": "add", "data": {"merchant": "Nome", "amount": 50.00, "category": "Categoria", "date": "AAAA-MM-DD"}}. Inferir a data é crucial.
 Categorias: Alimentação, Transporte, Moradia, Lazer, Saúde, Vestuário, Educação, Outros.
-Se for uma pergunta (ex: "quanto gastei com lazer?"), responda de forma conversacional.
+Se for uma pergunta (ex: "quanto gastei com lazer este mês?"), responda de forma conversacional.
 Usuário: "${userMessage}"`;
         const payload = { contents: [{ parts: [{ text: systemPrompt }] }] };
         const textResponse = await callGeminiAPI(payload);
+        
         if (textResponse) {
             try {
                 const data = JSON.parse(textResponse.replace(/```json|```/g, '').trim());
-                if (data.action === 'add' && data.data) { const confirmationMessage = addTransaction(data.data); if (confirmationMessage) addMessage(confirmationMessage); } else { addMessage(textResponse); }
-            } catch (e) { addMessage(textResponse); }
+                if (data.action === 'add' && data.data) {
+                    const confirmationMessage = addTransaction(data.data);
+                    if (confirmationMessage) addMessage(confirmationMessage);
+                } else {
+                    addMessage(textResponse);
+                }
+            } catch (e) {
+                addMessage(textResponse);
+            }
         }
     };
     
-    const setLoading = (isLoading) => {
-        loadingIndicator.style.display = isLoading ? 'block' : 'none';
-        attachButton.disabled = isLoading;
-        sendButton.disabled = isLoading;
-        chatInput.disabled = isLoading;
+    // --- FUNÇÕES DE CONTROLE DE UI ---
+    const setLoading = (isLoading, message = 'Pensando...') => {
+        elements.loadingIndicator.style.display = isLoading ? 'block' : 'none';
+        elements.loadingIndicator.querySelector('span').textContent = message;
+        elements.attachButton.disabled = isLoading;
+        elements.sendButton.disabled = isLoading;
+        elements.chatInput.disabled = isLoading;
     };
 
-    // --- EVENT LISTENERS ---
-    attachButton.addEventListener('click', () => imageInput.click());
-    imageInput.addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = document.createElement('img');
-                img.src = e.target.result;
-                img.className = "max-w-full h-auto rounded-lg";
-                addMessage(img, 'user');
-                const base64Data = e.target.result.split(',')[1];
-                handleImageUpload(base64Data);
-            };
-            reader.readAsDataURL(file);
-            imageInput.value = '';
-        }
-    });
-    const sendTextMessage = () => {
-        const message = chatInput.value.trim();
-        if (message) { addMessage(message, 'user'); chatInput.value = ''; handleTextMessage(message); }
+    // --- REGISTRO DOS EVENT LISTENERS ---
+    const setupEventListeners = () => {
+        elements.menuButton.addEventListener('click', () => toggleMenu(true));
+        elements.closeMenuButton.addEventListener('click', () => toggleMenu(false));
+        elements.menuOverlay.addEventListener('click', () => toggleMenu(false));
+        elements.attachButton.addEventListener('click', () => elements.imageInput.click());
+        elements.imageInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = "max-w-full h-auto rounded-lg";
+                    addMessage(img, 'user');
+                    const base64Data = e.target.result.split(',')[1];
+                    handleImageUpload(base64Data);
+                };
+                reader.readAsDataURL(file);
+                elements.imageInput.value = '';
+            }
+        });
+        const sendTextMessage = () => {
+            const message = elements.chatInput.value.trim();
+            if (message) { addMessage(message, 'user'); elements.chatInput.value = ''; handleTextMessage(message); }
+        };
+        elements.sendButton.addEventListener('click', sendTextMessage);
+        elements.chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendTextMessage(); });
+        elements.monthFilter.addEventListener('change', renderDashboard);
     };
-    sendButton.addEventListener('click', sendTextMessage);
-    chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendTextMessage(); });
-    monthFilter.addEventListener('change', renderDashboard);
 
-    // --- INICIALIZAÇÃO ---
-    lucide.createIcons();
-    addMessage("Olá! Sou o Fin.IA. Envie uma nota, digite um gasto ou me faça uma pergunta para começar.");
-    loadData();
+    // --- INICIALIZAÇÃO DA APLICAÇÃO ---
+    const init = () => {
+        lucide.createIcons();
+        setupPWA();
+        setupEventListeners();
+        loadData();
+        addMessage("Olá! Sou o Fin.IA. Envie uma nota, digite um gasto ou me faça uma pergunta para começar.");
+    };
+
+    init();
 });
 </script>
 </body>
 </html>
+
