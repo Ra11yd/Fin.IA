@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fin.IA</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1f2937">
+    <link rel="apple-touch-icon" href="logo fin.ia.web">
+    
+    <link rel="manifest" id="manifest">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overscroll-behavior-y: contain;
+        }
+        .chat-container::-webkit-scrollbar,
+        .transaction-list::-webkit-scrollbar,
+        #side-menu::-webkit-scrollbar {
+            width: 4px;
+        }
+        .chat-container::-webkit-scrollbar-thumb,
+        .transaction-list::-webkit-scrollbar-thumb,
+        #side-menu::-webkit-scrollbar-thumb {
+            background-color: #4b5563;
+            border-radius: 20px;
+        }
+        /* Efeito de transição suave */
+        #side-menu, #menu-overlay {
+            transition: all 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex flex-col h-screen overflow-hidden">
+
+    <header class="bg-white dark:bg-gray-800 shadow-md p-4 flex items-center justify-between z-20">
+        <div class="flex items-center space-x-4">
+             <button id="menu-button" class="p-2 text-gray-500 dark:text-gray-400">
+                <i data-lucide="menu"></i>
+            </button>
+            <div class="flex items-center space-x-2">
+                <img src="logo fin.ia.web" alt="Fin.IA Logo" class="w-7 h-7 rounded-lg">
+                <h1 class="text-xl font-bold">Fin.IA</h1>
+            </div>
+        </div>
+        <button id="install-button" class="hidden bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+            Instalar App
+        </button>
+    </header>
+
+    <aside id="side-menu" class="fixed top-0 left-0 w-80 md:w-96 h-full bg-white dark:bg-gray-800 shadow-lg p-6 flex flex-col z-40 transform -translate-x-full overflow-y-auto">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold">Dashboard</h2>
+             <button id="close-menu-button" class="p-2 text-gray-500 dark:text-gray-400">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        
+        <div class="mb-4">
+            <label for="month-filter" class="block text-sm font-medium text-gray-500 dark:text-gray-400">Filtrar por Mês</label>
+            <select id="month-filter" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                </select>
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 mb-4">
+            <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
+                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Gasto (Mês)</h3>
+                <p id="total-spent" class="text-2xl font-semibold">R$ 0,00</p>
+            </div>
+            <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
+                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Categoria Principal</h3>
+                <p id="main-category" class="text-2xl font-semibold">-</p>
+            </div>
+        </div>
+        <div class="flex-1 min-h-[250px] mb-4">
+            <canvas id="categoryChart"></canvas>
+        </div>
+        <div>
+            <h3 class="font-bold mb-2">Lançamentos do Mês</h3>
+            <div id="transaction-list" class="transaction-list space-y-2 overflow-y-auto max-h-48 pr-2">
+                </div>
+        </div>
+    </aside>
+    <div id="menu-overlay" class="fixed top-0 left-0 w-full h-full bg-black/50 z-30 hidden"></div>
+
+
+    <main class="flex-1 p-4 overflow-hidden flex flex-col">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg flex flex-col h-full w-full max-w-4xl mx-auto">
+            <div id="chat-container" class="chat-container flex-1 p-6 overflow-y-auto">
+                </div>
+            <div id="loading-indicator" class="hidden p-6 text-center">
+                <div class="flex items-center justify-center space-x-2">
+                    <div class="w-4 h-4 rounded-full animate-pulse bg-indigo-400"></div>
+                    <div class="w-4 h-4 rounded-full animate-pulse bg-indigo-400" style="animation-delay: 0.2s;"></div>
+                    <div class="w-4 h-4 rounded-full animate-pulse bg-indigo-400" style="animation-delay: 0.4s;"></div>
+                    <span class="ml-2">Pensando...</span>
+                </div>
+            </div>
+            <div class="p-4 border-t border-gray-200 dark:border-gray-700">
+                <div class="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 rounded-lg p-2">
+                    <input type="file" id="image-input" accept="image/*" class="hidden">
+                    <button id="attach-button" class="p-2 text-gray-500 dark:text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400">
+                        <i data-lucide="paperclip"></i>
+                    </button>
+                    <input type="text" id="chat-input" placeholder="Digite uma despesa ou faça uma pergunta..." class="flex-1 bg-transparent focus:outline-none">
+                     <button id="send-button" class="bg-indigo-600 text-white rounded-md p-2 hover:bg-indigo-700 transition-colors">
+                        <i data-lucide="send"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    // --- ELEMENTOS DO DOM ---
+    const chatContainer = document.getElementById('chat-container');
+    const imageInput = document.getElementById('image-input');
+    const attachButton = document.getElementById('attach-button');
+    const sendButton = document.getElementById('send-button');
+    const chatInput = document.getElementById('chat-input');
+    const loadingIndicator = document.getElementById('loading-indicator');
+    const transactionList = document.getElementById('transaction-list');
+    const totalSpentEl = document.getElementById('total-spent');
+    const mainCategoryEl = document.getElementById('main-category');
+    const installButton = document.getElementById('install-button');
+    const manifestLink = document.getElementById('manifest');
+    const menuButton = document.getElementById('menu-button');
+    const closeMenuButton = document.getElementById('close-menu-button');
+    const sideMenu = document.getElementById('side-menu');
+    const menuOverlay = document.getElementById('menu-overlay');
+    const monthFilter = document.getElementById('month-filter');
+
+    // --- ESTADO DA APLICAÇÃO ---
+    let transactions = [];
+    let chartInstance = null;
+    let deferredInstallPrompt = null;
+
+    // --- LÓGICA DO MENU ---
+    const openMenu = () => {
+        sideMenu.classList.remove('-translate-x-full');
+        menuOverlay.classList.remove('hidden');
+    };
+
+    const closeMenu = () => {
+        sideMenu.classList.add('-translate-x-full');
+        menuOverlay.classList.add('hidden');
+    };
+    
+    menuButton.addEventListener('click', openMenu);
+    closeMenuButton.addEventListener('click', closeMenu);
+    menuOverlay.addEventListener('click', closeMenu);
+
+    // --- CONFIGURAÇÃO PWA ---
+    // LOGO ATUALIZADA no Manifesto
+    const manifest = {
+        "name": "Fin.IA",
+        "short_name": "Fin.IA",
+        "start_url": ".",
+        "display": "standalone",
+        "background_color": "#111827",
+        "theme_color": "#4f46e5",
+        "description": "Controle seus gastos com a ajuda da IA.",
+        "icons": [
+            {
+                "src": "logo.png",
+                "sizes": "192x192",
+                "type": "image/png"
+            },
+            {
+                "src": "logo.png",
+                "sizes": "512x512",
+                "type": "image/png"
+            }
+        ]
+    };
+    const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+    manifestLink.href = URL.createObjectURL(manifestBlob);
+    if ('serviceWorker' in navigator) { navigator.serviceWorker.register(URL.createObjectURL(new Blob([`const CACHE_NAME = 'fin-ia-cache-v1'; self.addEventListener('install', e => e.waitUntil(caches.open(CACHE_NAME).then(c => c.add('/')))); self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));`], { type: 'application/javascript' }))).catch(err => console.error('SW Error', err)); }
+    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredInstallPrompt = e; installButton.classList.remove('hidden'); });
+    installButton.addEventListener('click', () => { if (deferredInstallPrompt) { deferredInstallPrompt.prompt(); deferredInstallPrompt.userChoice.then(() => { deferredInstallPrompt = null; installButton.classList.add('hidden'); }); } });
+
+    // --- FUNÇÕES DO CHAT ---
+    const addMessage = (content, sender = 'ai') => {
+        const messageWrapper = document.createElement('div');
+        messageWrapper.className = `flex mb-4 ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
+        const messageContent = document.createElement('div');
+        messageContent.className = `rounded-lg px-4 py-2 max-w-xs md:max-w-md ${sender === 'user' ? 'bg-indigo-500 text-white' : 'bg-gray-200 dark:bg-gray-700'}`;
+        if (typeof content === 'object' && content.nodeType === 1) { messageContent.appendChild(content); } else { messageContent.innerHTML = content.replace(/\n/g, '<br>'); }
+        messageWrapper.appendChild(messageContent);
+        chatContainer.appendChild(messageWrapper);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    };
+
+    // --- FUNÇÕES DO DASHBOARD ---
+    const populateMonthFilter = () => {
+        const uniqueMonths = [...new Set(transactions.map(t => t.date.substring(0, 7)))].sort().reverse();
+        monthFilter.innerHTML = '<option value="all">Todos os Meses</option>';
+        uniqueMonths.forEach(month => {
+            const [year, monthNum] = month.split('-');
+            const date = new Date(year, monthNum - 1, 1);
+            const monthName = date.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+            const option = document.createElement('option');
+            option.value = month;
+            option.textContent = `${monthName.charAt(0).toUpperCase()}${monthName.slice(1)}`;
+            monthFilter.appendChild(option);
+        });
+        const currentMonth = new Date().toISOString().substring(0, 7);
+        if (uniqueMonths.includes(currentMonth)) {
+            monthFilter.value = currentMonth;
+        } else if (uniqueMonths.length > 0) {
+            monthFilter.value = uniqueMonths[0];
+        }
+    };
+
+    const renderDashboard = () => {
+        const selectedMonth = monthFilter.value;
+        const filteredTransactions = selectedMonth === 'all'
+            ? transactions
+            : transactions.filter(t => t.date.startsWith(selectedMonth));
+
+        const total = filteredTransactions.reduce((sum, t) => sum + t.amount, 0);
+        totalSpentEl.textContent = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+        transactionList.innerHTML = '';
+        if (filteredTransactions.length === 0) {
+            transactionList.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400">Nenhum lançamento neste mês.</p>';
+        } else {
+            filteredTransactions.slice().reverse().forEach(t => {
+                const item = document.createElement('div');
+                item.className = 'flex justify-between items-center bg-gray-100 dark:bg-gray-700/50 p-2 rounded-md';
+                const formattedDate = new Date(t.date).toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'});
+                item.innerHTML = `<div><p class="font-semibold">${t.merchant}</p><p class="text-xs text-gray-500 dark:text-gray-400">${t.category} - ${formattedDate}</p></div><p class="font-bold text-indigo-500 dark:text-indigo-400">${t.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>`;
+                transactionList.appendChild(item);
+            });
+        }
+
+        const categoryData = filteredTransactions.reduce((acc, t) => {
+            acc[t.category] = (acc[t.category] || 0) + t.amount;
+            return acc;
+        }, {});
+
+        const mainCategory = Object.keys(categoryData).reduce((a, b) => categoryData[a] > categoryData[b] ? a : b, '-');
+        mainCategoryEl.textContent = mainCategory;
+
+        const chartLabels = Object.keys(categoryData);
+        const chartValues = Object.values(categoryData);
+
+        if (chartInstance) {
+            chartInstance.data.labels = chartLabels;
+            chartInstance.data.datasets[0].data = chartValues;
+            chartInstance.update();
+        } else {
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            chartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: chartLabels, datasets: [{ label: 'Gastos', data: chartValues, backgroundColor: ['rgba(79, 70, 229, 0.7)', 'rgba(239, 68, 68, 0.7)', 'rgba(245, 158, 11, 0.7)', 'rgba(16, 185, 129, 0.7)', 'rgba(59, 130, 246, 0.7)', 'rgba(139, 92, 246, 0.7)'], borderColor: 'rgba(31, 41, 55, 0.5)', borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: document.documentElement.classList.contains('dark') ? '#f3f4f6' : '#374151' } } } } });
+        }
+    };
+
+    // --- LÓGICA DE DADOS ---
+    const saveData = () => { localStorage.setItem('financialTransactions', JSON.stringify(transactions)); };
+    const loadData = () => {
+        const savedData = localStorage.getItem('financialTransactions');
+        if (savedData) transactions = JSON.parse(savedData);
+        populateMonthFilter();
+        renderDashboard();
+    };
+    const addTransaction = (data) => {
+        if (data.merchant && typeof data.amount === 'number' && data.category) {
+            const newTransaction = { id: Date.now(), merchant: data.merchant, amount: data.amount, category: data.category, date: data.date || new Date().toISOString() };
+            transactions.push(newTransaction);
+            saveData();
+            populateMonthFilter();
+            renderDashboard();
+            return `✅ Gasto registrado!\nLocal: ${newTransaction.merchant}\nValor: ${newTransaction.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}\nData: ${new Date(newTransaction.date).toLocaleDateString('pt-BR')}`;
+        } return null;
+    };
+
+    // --- API DO GEMINI ---
+    const apiKey = "AIzaSyBjidop8ZSlwmUmP6Cm-1DYtAw1xDE8-vM"; // Deixe em branco
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+    const callGeminiAPI = async (payload) => {
+        try {
+            const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
+            const result = await response.json();
+            return result.candidates[0].content.parts[0].text;
+        } catch (error) {
+            console.error("Gemini API Error:", error);
+            addMessage("😥 Desculpe, tive um problema. Tente novamente.");
+            return null;
+        } finally { setLoading(false); }
+    };
+
+    const handleImageUpload = async (base64Image) => {
+        setLoading(true);
+        loadingIndicator.querySelector('span').textContent = 'Analisando sua nota...';
+        const systemPrompt = `Analise a nota fiscal. Extraia "merchant" (nome do estabelecimento), "amount" (valor TOTAL numérico), "category" (uma de: Alimentação, Transporte, Moradia, Lazer, Saúde, Vestuário, Educação, Outros) e "date" (no formato AAAA-MM-DD). Se a data não for encontrada, use null. Responda APENAS com um objeto JSON válido.`;
+        const payload = { contents: [{ parts: [{ text: systemPrompt }, { inlineData: { mimeType: "image/jpeg", data: base64Image } }] }] };
+        const textResponse = await callGeminiAPI(payload);
+        if (textResponse) {
+            try {
+                const data = JSON.parse(textResponse.replace(/```json|```/g, '').trim());
+                const confirmationMessage = addTransaction(data);
+                if (confirmationMessage) addMessage(confirmationMessage); else throw new Error('Dados da IA inválidos.');
+            } catch (e) { addMessage("😥 Não consegui extrair os dados da imagem."); }
+        }
+    };
+
+    const handleTextMessage = async (userMessage) => {
+        setLoading(true);
+        loadingIndicator.querySelector('span').textContent = 'Pensando...';
+        const systemPrompt = `Você é um assistente financeiro. A data de hoje é ${new Date().toLocaleDateString('pt-BR')}. Transações atuais: ${JSON.stringify(transactions.slice(-5))}.
+Se o usuário pedir para adicionar um gasto (ex: "adicione 50 reais no ifood ontem"), responda APENAS com JSON: {"action": "add", "data": {"merchant": "Nome", "amount": 50.00, "category": "Categoria", "date": "AAAA-MM-DD"}}. Inferir a data é crucial.
+Categorias: Alimentação, Transporte, Moradia, Lazer, Saúde, Vestuário, Educação, Outros.
+Se for uma pergunta (ex: "quanto gastei com lazer?"), responda de forma conversacional.
+Usuário: "${userMessage}"`;
+        const payload = { contents: [{ parts: [{ text: systemPrompt }] }] };
+        const textResponse = await callGeminiAPI(payload);
+        if (textResponse) {
+            try {
+                const data = JSON.parse(textResponse.replace(/```json|```/g, '').trim());
+                if (data.action === 'add' && data.data) { const confirmationMessage = addTransaction(data.data); if (confirmationMessage) addMessage(confirmationMessage); } else { addMessage(textResponse); }
+            } catch (e) { addMessage(textResponse); }
+        }
+    };
+    
+    const setLoading = (isLoading) => {
+        loadingIndicator.style.display = isLoading ? 'block' : 'none';
+        attachButton.disabled = isLoading;
+        sendButton.disabled = isLoading;
+        chatInput.disabled = isLoading;
+    };
+
+    // --- EVENT LISTENERS ---
+    attachButton.addEventListener('click', () => imageInput.click());
+    imageInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.className = "max-w-full h-auto rounded-lg";
+                addMessage(img, 'user');
+                const base64Data = e.target.result.split(',')[1];
+                handleImageUpload(base64Data);
+            };
+            reader.readAsDataURL(file);
+            imageInput.value = '';
+        }
+    });
+    const sendTextMessage = () => {
+        const message = chatInput.value.trim();
+        if (message) { addMessage(message, 'user'); chatInput.value = ''; handleTextMessage(message); }
+    };
+    sendButton.addEventListener('click', sendTextMessage);
+    chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendTextMessage(); });
+    monthFilter.addEventListener('change', renderDashboard);
+
+    // --- INICIALIZAÇÃO ---
+    lucide.createIcons();
+    addMessage("Olá! Sou o Fin.IA. Envie uma nota, digite um gasto ou me faça uma pergunta para começar.");
+    loadData();
+});
+</script>
+</body>
+</html>
