@@ -21,7 +21,6 @@
         body {
             font-family: 'Inter', sans-serif;
             overscroll-behavior-y: contain;
-            /* overflow: hidden; <- Removido para melhorar compatibilidade mobile */
         }
         .chat-container::-webkit-scrollbar, .side-menu-content::-webkit-scrollbar { display: none; }
         .transaction-list::-webkit-scrollbar { width: 4px; }
@@ -74,34 +73,36 @@
         <div class="side-menu-content p-6 space-y-6 overflow-y-auto" style="height: calc(100% - 73px);">
             <!-- Visão Geral -->
             <div>
-                <h3 class="text-xl font-bold mb-4">Visão Geral</h3>
+                <h3 class="text-xl font-bold mb-4">Resumo do Mês</h3>
                 <select id="month-filter" class="w-full bg-gray-100 dark:bg-gray-700 rounded-lg p-2 outline-none mb-4">
                     <!-- Opções de mês -->
                 </select>
+                
+                <div class="mb-4">
+                    <label for="salary-input" class="block text-sm text-gray-500 dark:text-gray-400">Salário Principal (R$)</label>
+                    <input type="number" id="salary-input" placeholder="Definir salário base" class="w-full mt-1 p-2 text-lg font-bold bg-gray-100 dark:bg-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+
                 <div class="grid grid-cols-2 gap-4 text-center mb-4">
                     <div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Total Gasto</p>
-                        <p id="total-spent" class="text-2xl font-bold">R$ 0,00</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Renda Extra</p>
+                        <p id="extra-income" class="text-2xl font-bold text-green-600 dark:text-green-500">+ R$ 0,00</p>
                     </div>
                     <div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Principal Categoria</p>
-                        <p id="main-category" class="text-2xl font-bold">-</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Total Gasto</p>
+                        <p id="total-spent" class="text-2xl font-bold text-red-600 dark:text-red-500">- R$ 0,00</p>
                     </div>
                 </div>
                 
-                <!-- SEÇÃO DE SALÁRIO -->
                 <div class="space-y-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-                    <div>
-                        <label for="salary-input" class="block text-sm text-center text-gray-500 dark:text-gray-400">Salário do Mês (R$)</label>
-                        <input type="number" id="salary-input" placeholder="Clique para definir" class="w-full mt-1 p-2 text-center text-lg font-bold bg-gray-100 dark:bg-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
-                    </div>
                     <div class="text-center">
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Saldo Restante</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Saldo Final</p>
                         <p id="remaining-salary" class="text-3xl font-bold text-green-600 dark:text-green-500">R$ 0,00</p>
                     </div>
                 </div>
 
-                <div class="mt-6 h-48">
+                <h3 class="text-xl font-bold mt-6 mb-2">Gráfico de Gastos</h3>
+                <div class="h-48">
                     <canvas id="categoryChart"></canvas>
                 </div>
             </div>
@@ -162,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadingIndicator: document.getElementById('loading-indicator'),
         monthFilter: document.getElementById('month-filter'),
         totalSpent: document.getElementById('total-spent'),
-        mainCategory: document.getElementById('main-category'),
+        extraIncome: document.getElementById('extra-income'),
         categoryChart: document.getElementById('categoryChart'),
         transactionList: document.getElementById('transaction-list'),
         salaryInput: document.getElementById('salary-input'),
@@ -247,8 +248,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const addTransaction = (data) => {
-        if (!data.merchant || typeof data.amount !== 'number' || !data.category) return null;
-        const newTransaction = { id: Date.now(), merchant: data.merchant, amount: data.amount, category: data.category, date: data.date || new Date().toISOString().split('T')[0] };
+        if (!data.merchant || typeof data.amount !== 'number' || !data.category || !data.type) return null;
+        const newTransaction = { id: Date.now(), type: data.type, merchant: data.merchant, amount: data.amount, category: data.category, date: data.date || new Date().toISOString().split('T')[0] };
         state.transactions.push(newTransaction);
         saveData();
         populateMonthFilter();
@@ -271,11 +272,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const renderDashboard = () => {
         const selectedMonth = elements.monthFilter.value;
         const filtered = selectedMonth === 'all' ? state.transactions : state.transactions.filter(t => t.date.startsWith(selectedMonth));
+        
+        const expenses = filtered.filter(t => t.type === 'expense');
+        const incomes = filtered.filter(t => t.type === 'income');
 
-        const total = filtered.reduce((sum, t) => sum + t.amount, 0);
-        elements.totalSpent.textContent = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        const totalSpent = expenses.reduce((sum, t) => sum + t.amount, 0);
+        const totalExtraIncome = incomes.reduce((sum, t) => sum + t.amount, 0);
 
-        // Lógica do Salário
+        elements.totalSpent.textContent = `- ${totalSpent.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
+        elements.extraIncome.textContent = `+ ${totalExtraIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
+
         if (selectedMonth === 'all') {
             elements.salaryInput.disabled = true;
             elements.salaryInput.value = '';
@@ -283,10 +289,10 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.remainingSalary.textContent = '-';
         } else {
             elements.salaryInput.disabled = false;
-            elements.salaryInput.placeholder = 'Clique para definir';
+            elements.salaryInput.placeholder = 'Definir salário base';
             const currentSalary = state.salaries[selectedMonth] || 0;
             elements.salaryInput.value = currentSalary > 0 ? currentSalary : '';
-            const remaining = currentSalary - total;
+            const remaining = (currentSalary + totalExtraIncome) - totalSpent;
             elements.remainingSalary.textContent = remaining.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
             elements.remainingSalary.classList.toggle('text-red-600', remaining < 0);
             elements.remainingSalary.classList.toggle('dark:text-red-500', remaining < 0);
@@ -295,16 +301,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         elements.transactionList.innerHTML = filtered.length === 0 ? '<p class="text-center text-gray-500 text-sm">Nenhum lançamento.</p>' : '';
-        filtered.slice().reverse().forEach(t => {
+        filtered.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(t => {
             const item = document.createElement('div');
+            const isIncome = t.type === 'income';
             item.className = 'flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg';
             const formattedDate = new Date(t.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'});
-            item.innerHTML = `<div><p class="font-bold">${t.merchant}</p><p class="text-xs text-gray-500 dark:text-gray-400">${t.category} - ${formattedDate}</p></div><p class="font-bold text-red-500">${t.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>`;
+            item.innerHTML = `<div><p class="font-bold">${t.merchant}</p><p class="text-xs text-gray-500 dark:text-gray-400">${t.category} - ${formattedDate}</p></div>
+            <p class="font-bold ${isIncome ? 'text-green-500' : 'text-red-500'}">${isIncome ? '+' : '-'} ${t.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>`;
             elements.transactionList.appendChild(item);
         });
 
-        const categoryData = filtered.reduce((acc, t) => { acc[t.category] = (acc[t.category] || 0) + t.amount; return acc; }, {});
-        elements.mainCategory.textContent = Object.keys(categoryData).reduce((a, b) => categoryData[a] > categoryData[b] ? a : b, '-');
+        const categoryData = expenses.reduce((acc, t) => { acc[t.category] = (acc[t.category] || 0) + t.amount; return acc; }, {});
 
         if (state.chartInstance) state.chartInstance.destroy();
         const ctx = elements.categoryChart.getContext('2d');
@@ -334,8 +341,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = JSON.parse(textResponse.replace(/```json|```/g, '').trim());
             if(data.action === 'add' && data.data) {
                 const added = addTransaction(data.data);
-                if (added) addMessage(`✅ Gasto de ${added.amount.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})} em "${added.merchant}" registrado na categoria ${added.category}!`);
-                else addMessage('Não consegui extrair informações válidas para registrar o gasto.');
+                const isIncome = added.type === 'income';
+                if (added) addMessage(`✅ ${isIncome ? 'Renda' : 'Gasto'} de ${added.amount.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})} em "${added.merchant}" registrada!`);
+                else addMessage('Não consegui extrair informações válidas para registrar.');
             } else if (data.action === 'talk') {
                 addMessage(data.response);
             } else {
@@ -350,8 +358,10 @@ document.addEventListener('DOMContentLoaded', () => {
         addMessage(message, 'user');
         toggleLoading(true);
         const systemPrompt = `Você é um assistente financeiro. Hoje é ${new Date().toLocaleDateString('pt-BR')}.
-        - Se o usuário pedir para adicionar um gasto (ex: "adicione 50 reais no ifood ontem"), responda APENAS com JSON: {"action": "add", "data": {"merchant": "Nome", "amount": 50.00, "category": "Categoria", "date": "AAAA-MM-DD"}}. Inferir a data é crucial. Categorias válidas: Alimentação, Transporte, Moradia, Lazer, Saúde, Vestuário, Educação, Outros.
+        - Se o usuário registrar um GASTO (ex: "adicione 50 reais no ifood ontem"), responda APENAS com JSON: {"action": "add", "data": {"type": "expense", "merchant": "Nome", "amount": 50.00, "category": "Categoria", "date": "AAAA-MM-DD"}}. Categorias de Gasto Válidas: Alimentação, Transporte, Moradia, Lazer, Saúde, Vestuário, Educação, Outros.
+        - Se o usuário registrar uma RENDA (ex: "recebi 200 reais de um bico"), responda APENAS com JSON: {"action": "add", "data": {"type": "income", "merchant": "Descrição da Renda", "amount": 200.00, "category": "Renda", "date": "AAAA-MM-DD"}}.
         - Se for uma pergunta (ex: "quanto gastei com lazer?"), responda com JSON: {"action": "talk", "response": "Sua resposta aqui"}. Para responder, use estes dados de transações: ${JSON.stringify(state.transactions)}.
+        Inferir a data é crucial.
         Usuário disse: "${message}"`;
         const payload = { contents: [{ parts: [{ text: systemPrompt }] }] };
         const responseText = await callGeminiAPI(payload);
@@ -369,7 +379,7 @@ document.addEventListener('DOMContentLoaded', () => {
             reader.onload = e => resolve(e.target.result.split(',')[1]);
             reader.readAsDataURL(imageFile);
         });
-        const systemPrompt = `Analise a nota fiscal. Extraia "merchant", "amount" (numérico), "category" (uma de: Alimentação, Transporte, Moradia, Lazer, Saúde, Vestuário, Educação, Outros) e "date" (AAAA-MM-DD). Responda APENAS com JSON: {"action": "add", "data": {...}}`;
+        const systemPrompt = `Analise a nota fiscal. Extraia "merchant", "amount" (numérico), "category" (uma de: Alimentação, Transporte, Moradia, Lazer, Saúde, Vestuário, Educação, Outros) e "date" (AAAA-MM-DD). A transação é sempre um gasto. Responda APENAS com JSON: {"action": "add", "data": {"type": "expense", "merchant": "...", "amount": ..., "category": "...", "date": "..."}}`;
         const payload = { contents: [{ parts: [{ text: systemPrompt }, { inlineData: { mimeType: imageFile.type, data: base64Image } }] }] };
         const responseText = await callGeminiAPI(payload);
         if(responseText) processIAInstruction(responseText);
