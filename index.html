@@ -78,7 +78,7 @@
                 <select id="month-filter" class="w-full bg-gray-100 dark:bg-gray-700 rounded-lg p-2 outline-none mb-4">
                     <!-- Opções de mês -->
                 </select>
-                <div class="grid grid-cols-2 gap-4 text-center">
+                <div class="grid grid-cols-2 gap-4 text-center mb-4">
                     <div>
                         <p class="text-sm text-gray-500 dark:text-gray-400">Total Gasto</p>
                         <p id="total-spent" class="text-2xl font-bold">R$ 0,00</p>
@@ -88,6 +88,19 @@
                         <p id="main-category" class="text-2xl font-bold">-</p>
                     </div>
                 </div>
+                
+                <!-- SEÇÃO DE SALÁRIO -->
+                <div class="space-y-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                    <div>
+                        <label for="salary-input" class="block text-sm text-center text-gray-500 dark:text-gray-400">Salário do Mês (R$)</label>
+                        <input type="number" id="salary-input" placeholder="Clique para definir" class="w-full mt-1 p-2 text-center text-lg font-bold bg-gray-100 dark:bg-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </div>
+                    <div class="text-center">
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Saldo Restante</p>
+                        <p id="remaining-salary" class="text-3xl font-bold text-green-600 dark:text-green-500">R$ 0,00</p>
+                    </div>
+                </div>
+
                 <div class="mt-6 h-48">
                     <canvas id="categoryChart"></canvas>
                 </div>
@@ -152,10 +165,12 @@ document.addEventListener('DOMContentLoaded', () => {
         mainCategory: document.getElementById('main-category'),
         categoryChart: document.getElementById('categoryChart'),
         transactionList: document.getElementById('transaction-list'),
+        salaryInput: document.getElementById('salary-input'),
+        remainingSalary: document.getElementById('remaining-salary'),
     };
 
     // --- ESTADO DA APLICAÇÃO ---
-    let state = { transactions: [], chartInstance: null, deferredInstallPrompt: null };
+    let state = { transactions: [], salaries: {}, chartInstance: null, deferredInstallPrompt: null };
 
     // --- LÓGICA DE INSTALAÇÃO PWA ---
     const setupPWA = () => {
@@ -182,9 +197,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (state.deferredInstallPrompt) {
                 state.deferredInstallPrompt.prompt();
                 const { outcome } = await state.deferredInstallPrompt.userChoice;
-                console.log(`User choice: ${outcome}`);
-                state.deferredInstallPrompt = null;
-                elements.installButton.classList.add('hidden');
+                if (outcome === 'accepted') {
+                    state.deferredInstallPrompt = null;
+                    elements.installButton.classList.add('hidden');
+                }
             }
         });
     };
@@ -216,11 +232,16 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- LÓGICA DE DADOS E DASHBOARD ---
-    const saveData = () => localStorage.setItem('finia-transactions', JSON.stringify(state.transactions));
+    const saveData = () => {
+        localStorage.setItem('finia-transactions', JSON.stringify(state.transactions));
+        localStorage.setItem('finia-salaries', JSON.stringify(state.salaries));
+    };
     
     const loadData = () => {
-        const savedData = localStorage.getItem('finia-transactions');
-        state.transactions = savedData ? JSON.parse(savedData) : [];
+        const savedTransactions = localStorage.getItem('finia-transactions');
+        state.transactions = savedTransactions ? JSON.parse(savedTransactions) : [];
+        const savedSalaries = localStorage.getItem('finia-salaries');
+        state.salaries = savedSalaries ? JSON.parse(savedSalaries) : {};
         populateMonthFilter();
         renderDashboard();
     };
@@ -251,7 +272,27 @@ document.addEventListener('DOMContentLoaded', () => {
         const selectedMonth = elements.monthFilter.value;
         const filtered = selectedMonth === 'all' ? state.transactions : state.transactions.filter(t => t.date.startsWith(selectedMonth));
 
-        elements.totalSpent.textContent = filtered.reduce((sum, t) => sum + t.amount, 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        const total = filtered.reduce((sum, t) => sum + t.amount, 0);
+        elements.totalSpent.textContent = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+        // Lógica do Salário
+        if (selectedMonth === 'all') {
+            elements.salaryInput.disabled = true;
+            elements.salaryInput.value = '';
+            elements.salaryInput.placeholder = 'Selecione um mês';
+            elements.remainingSalary.textContent = '-';
+        } else {
+            elements.salaryInput.disabled = false;
+            elements.salaryInput.placeholder = 'Clique para definir';
+            const currentSalary = state.salaries[selectedMonth] || 0;
+            elements.salaryInput.value = currentSalary > 0 ? currentSalary : '';
+            const remaining = currentSalary - total;
+            elements.remainingSalary.textContent = remaining.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            elements.remainingSalary.classList.toggle('text-red-600', remaining < 0);
+            elements.remainingSalary.classList.toggle('dark:text-red-500', remaining < 0);
+            elements.remainingSalary.classList.toggle('text-green-600', remaining >= 0);
+            elements.remainingSalary.classList.toggle('dark:text-green-500', remaining >= 0);
+        }
 
         elements.transactionList.innerHTML = filtered.length === 0 ? '<p class="text-center text-gray-500 text-sm">Nenhum lançamento.</p>' : '';
         filtered.slice().reverse().forEach(t => {
@@ -351,6 +392,14 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         elements.sendButton.addEventListener('click', sendAction);
         elements.chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendAction(); });
+        elements.salaryInput.addEventListener('change', () => {
+            const selectedMonth = elements.monthFilter.value;
+            if (selectedMonth !== 'all') {
+                state.salaries[selectedMonth] = parseFloat(elements.salaryInput.value) || 0;
+                saveData();
+                renderDashboard();
+            }
+        });
     };
 
     // --- INICIALIZAÇÃO ---
